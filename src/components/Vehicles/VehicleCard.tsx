@@ -18,6 +18,10 @@ interface Vehicle {
   mileage: number;
   nextMaintenance: string;
   transmission?: string;
+  engine?: string;
+  fuel?: string;
+  insurance?: string;
+  registrationCard?: string;
 }
 
 interface VehicleCardProps {
@@ -69,7 +73,7 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onUpdate }) => {
 
         <div className="aspect-video bg-muted rounded-lg mb-4 overflow-hidden">
           <img
-            src={`https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80`}
+            src={`https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?ixlib=rb-4.0.3&ixid=M3wxMJA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80`}
             alt={`${vehicle.brand} ${vehicle.model}`}
             className="w-full h-full object-cover"
           />
