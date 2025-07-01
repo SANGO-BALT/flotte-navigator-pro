@@ -10,12 +10,12 @@ interface Vehicle {
   brand: string;
   model: string;
   type: string;
-  year: number;
+  year: string;
   serviceDate: string;
   circulationDate: string;
   image: string;
   status: string;
-  mileage: number;
+  mileage: string;
   nextMaintenance: string;
   transmission?: string;
   engine?: string;
@@ -111,7 +111,7 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onUpdate }) => {
               <div className="space-y-2 pt-2 border-t border-border">
                 <div className="flex items-center justify-between">
                   <span>Kilométrage:</span>
-                  <span className="font-medium text-foreground">{vehicle.mileage.toLocaleString()} km</span>
+                  <span className="font-medium text-foreground">{parseInt(vehicle.mileage || '0').toLocaleString()} km</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Transmission:</span>
