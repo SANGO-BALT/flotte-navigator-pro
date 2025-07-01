@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, User } from 'lucide-react';
+import { X, User, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -23,9 +23,10 @@ interface User {
 interface UserModalProps {
   user?: User | null;
   onClose: () => void;
+  onSave?: (userData: any) => void;
 }
 
-const UserModal: React.FC<UserModalProps> = ({ user, onClose }) => {
+const UserModal: React.FC<UserModalProps> = ({ user, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -63,6 +64,9 @@ const UserModal: React.FC<UserModalProps> = ({ user, onClose }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log(user ? 'Modifier utilisateur:' : 'Nouveau utilisateur:', formData);
+    if (onSave) {
+      onSave(formData);
+    }
     onClose();
   };
 
@@ -91,6 +95,22 @@ const UserModal: React.FC<UserModalProps> = ({ user, onClose }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Section Photo */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Photo de profil
+            </label>
+            <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+              <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">
+                Cliquez pour télécharger ou glissez une photo
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                JPG, PNG ou GIF (max. 2MB)
+              </p>
+            </div>
+          </div>
+
           {/* Informations personnelles */}
           <div>
             <h3 className="text-lg font-medium text-foreground mb-4">Informations personnelles</h3>

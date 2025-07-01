@@ -9,9 +9,7 @@ const UsersPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-
-  // Données d'exemple des utilisateurs
-  const users = [
+  const [users, setUsers] = useState([
     {
       id: '1',
       firstName: 'Jean',
@@ -57,7 +55,7 @@ const UsersPage: React.FC = () => {
       status: 'inactive',
       joinDate: '2021-03-20',
     },
-  ];
+  ]);
 
   const filteredUsers = users.filter(user =>
     user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -66,13 +64,44 @@ const UsersPage: React.FC = () => {
     user.licenseNumber.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleEdit = (user) => {
+  const handleAddUser = () => {
+    setSelectedUser(null);
+    setShowModal(true);
+  };
+
+  const handleEditUser = (user) => {
     setSelectedUser(user);
     setShowModal(true);
   };
 
-  const handleDelete = (userId) => {
-    console.log('Supprimer utilisateur:', userId);
+  const handleDeleteUser = (userId) => {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
+      setUsers(users.filter(user => user.id !== userId));
+      console.log('Utilisateur supprimé:', userId);
+    }
+  };
+
+  const handleViewUser = (user) => {
+    console.log('Voir détails utilisateur:', user);
+    // Ici vous pouvez ouvrir un modal de détails ou naviguer vers une page détail
+  };
+
+  const handleSaveUser = (userData) => {
+    if (selectedUser) {
+      // Modifier utilisateur existant
+      setUsers(users.map(user => 
+        user.id === selectedUser.id 
+          ? { ...userData, id: selectedUser.id }
+          : user
+      ));
+    } else {
+      // Ajouter nouvel utilisateur
+      const newUser = {
+        ...userData,
+        id: Date.now().toString(),
+      };
+      setUsers([...users, newUser]);
+    }
   };
 
   const statusColors = {
@@ -99,7 +128,7 @@ const UsersPage: React.FC = () => {
           />
         </div>
         
-        <Button onClick={() => setShowModal(true)} className="fleet-button-primary">
+        <Button onClick={handleAddUser} className="fleet-button-primary">
           <Plus className="w-4 h-4 mr-2" />
           Ajouter utilisateur
         </Button>
@@ -174,13 +203,13 @@ const UsersPage: React.FC = () => {
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex items-center space-x-2">
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" onClick={() => handleViewUser(user)}>
                         <Eye className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleEdit(user)}>
+                      <Button variant="ghost" size="sm" onClick={() => handleEditUser(user)}>
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDelete(user.id)}>
+                      <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(user.id)}>
                         <Trash className="w-4 h-4 text-red-500" />
                       </Button>
                     </div>
@@ -208,7 +237,8 @@ const UsersPage: React.FC = () => {
           onClose={() => {
             setShowModal(false);
             setSelectedUser(null);
-          }} 
+          }}
+          onSave={handleSaveUser}
         />
       )}
     </div>

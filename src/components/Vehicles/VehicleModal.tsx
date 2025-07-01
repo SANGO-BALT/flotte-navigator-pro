@@ -20,6 +20,7 @@ const VehicleModal: React.FC<VehicleModalProps> = ({ onClose }) => {
     mileage: '',
     engine: '',
     fuel: 'essence',
+    transmission: 'manuelle',
     insurance: '',
     registrationCard: '',
   });
@@ -27,6 +28,7 @@ const VehicleModal: React.FC<VehicleModalProps> = ({ onClose }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Nouveau véhicule:', formData);
+    // Ici vous pourrez ajouter la logique pour sauvegarder
     onClose();
   };
 
@@ -184,7 +186,7 @@ const VehicleModal: React.FC<VehicleModalProps> = ({ onClose }) => {
           </div>
 
           {/* Informations techniques */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
                 Motorisation
@@ -211,6 +213,22 @@ const VehicleModal: React.FC<VehicleModalProps> = ({ onClose }) => {
                 <option value="diesel">Diesel</option>
                 <option value="hybride">Hybride</option>
                 <option value="electrique">Électrique</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Boîte de vitesse
+              </label>
+              <select
+                name="transmission"
+                value={formData.transmission}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+              >
+                <option value="manuelle">Manuelle</option>
+                <option value="automatique">Automatique</option>
+                <option value="semi-automatique">Semi-automatique</option>
               </select>
             </div>
           </div>

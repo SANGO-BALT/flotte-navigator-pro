@@ -5,6 +5,9 @@ import Header from '@/components/Layout/Header';
 import Dashboard from '@/components/Dashboard/Dashboard';
 import VehiclesPage from '@/components/Vehicles/VehiclesPage';
 import UsersPage from '@/components/Users/UsersPage';
+import MaintenancePage from '@/components/Maintenance/MaintenancePage';
+import GPSPage from '@/components/GPS/GPSPage';
+import FuelPage from '@/components/Fuel/FuelPage';
 
 const Index = () => {
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -13,10 +16,10 @@ const Index = () => {
     dashboard: <Dashboard />,
     vehicles: <VehiclesPage />,
     users: <UsersPage />,
-    maintenance: <div className="p-6"><h2 className="text-2xl font-bold">Module Maintenance</h2><p className="text-muted-foreground">Interface de gestion de la maintenance en cours de développement...</p></div>,
-    gps: <div className="p-6"><h2 className="text-2xl font-bold">Module GPS & Localisation</h2><p className="text-muted-foreground">Intégration OpenStreetMap en cours de développement...</p></div>,
-    fuel: <div className="p-6"><h2 className="text-2xl font-bold">Gestion Carburant</h2><p className="text-muted-foreground">Module de gestion des carburants en cours de développement...</p></div>,
-    violations: <div className="p-6"><h2 className="text-2xl font-bold">Contraventions</h2><p className="text-muted-foreground">Gestion des contraventions et amendes en cours de développement...</p></div>,
+    maintenance: <MaintenancePage />,
+    gps: <GPSPage />,
+    fuel: <FuelPage />,
+    violations: <div className="p-6"><h2 className="text-2xl font-bold">Contraventions</h2><p className="text-muted-foreground">Module de gestion des contraventions en cours de développement...</p></div>,
     documents: <div className="p-6"><h2 className="text-2xl font-bold">Documents</h2><p className="text-muted-foreground">Gestion des documents véhicules en cours de développement...</p></div>,
     reports: <div className="p-6"><h2 className="text-2xl font-bold">Rapports</h2><p className="text-muted-foreground">Génération de rapports en cours de développement...</p></div>,
     settings: <div className="p-6"><h2 className="text-2xl font-bold">Paramètres</h2><p className="text-muted-foreground">Configuration de l'application en cours de développement...</p></div>,
