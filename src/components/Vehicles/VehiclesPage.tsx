@@ -28,6 +28,10 @@ const VehiclesPage: React.FC = () => {
       mileage: '85000',
       nextMaintenance: '2024-08-15',
       transmission: 'Manuelle',
+      engine: '1.6 HDi',
+      fuel: 'diesel',
+      insurance: 'ASS123456789',
+      registrationCard: 'CG123456789',
     },
     {
       id: '2',
@@ -43,6 +47,10 @@ const VehiclesPage: React.FC = () => {
       mileage: '120000',
       nextMaintenance: '2024-07-30',
       transmission: 'Automatique',
+      engine: '2.0 dCi',
+      fuel: 'diesel',
+      insurance: 'ASS987654321',
+      registrationCard: 'CG987654321',
     },
     {
       id: '3',
@@ -58,6 +66,10 @@ const VehiclesPage: React.FC = () => {
       mileage: '45000',
       nextMaintenance: '2024-09-10',
       transmission: 'Manuelle',
+      engine: '689cc',
+      fuel: 'essence',
+      insurance: 'ASS456789123',
+      registrationCard: 'CG456789123',
     },
   ]);
 

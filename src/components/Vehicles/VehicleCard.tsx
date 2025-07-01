@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import VehicleModal from './VehicleModal';
 
 interface Vehicle {
-  id: string;
+  id?: string;
   plate: string;
   brand: string;
   model: string;
@@ -13,15 +13,15 @@ interface Vehicle {
   year: string;
   serviceDate: string;
   circulationDate: string;
-  image: string;
-  status: string;
   mileage: string;
-  nextMaintenance: string;
-  transmission?: string;
-  engine?: string;
-  fuel?: string;
-  insurance?: string;
-  registrationCard?: string;
+  engine: string;
+  fuel: string;
+  transmission: string;
+  insurance: string;
+  registrationCard: string;
+  image?: string;
+  status?: string;
+  nextMaintenance?: string;
 }
 
 interface VehicleCardProps {
@@ -73,7 +73,7 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onUpdate }) => {
 
         <div className="aspect-video bg-muted rounded-lg mb-4 overflow-hidden">
           <img
-            src={`https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?ixlib=rb-4.0.3&ixid=M3wxMJA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80`}
+            src={vehicle.image || `https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?ixlib=rb-4.0.3&ixid=M3wxMJA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80`}
             alt={`${vehicle.brand} ${vehicle.model}`}
             className="w-full h-full object-cover"
           />
@@ -84,8 +84,8 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onUpdate }) => {
             <h3 className="text-lg font-semibold text-foreground">
               {vehicle.brand} {vehicle.model}
             </h3>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[vehicle.status]}`}>
-              {statusLabels[vehicle.status]}
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[vehicle.status || 'active']}`}>
+              {statusLabels[vehicle.status || 'active']}
             </span>
           </div>
 
@@ -120,7 +120,7 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onUpdate }) => {
                 <div className="flex items-center justify-between">
                   <span>Prochaine maintenance:</span>
                   <span className="font-medium text-foreground">
-                    {new Date(vehicle.nextMaintenance).toLocaleDateString('fr-FR')}
+                    {vehicle.nextMaintenance ? new Date(vehicle.nextMaintenance).toLocaleDateString('fr-FR') : 'N/A'}
                   </span>
                 </div>
               </div>
@@ -140,7 +140,7 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onUpdate }) => {
               <Wrench className="w-4 h-4 mx-auto mb-1 text-orange-500" />
               <p className="text-xs text-muted-foreground">Prochaine maintenance</p>
               <p className="text-xs font-medium text-foreground">
-                {new Date(vehicle.nextMaintenance).toLocaleDateString('fr-FR')}
+                {vehicle.nextMaintenance ? new Date(vehicle.nextMaintenance).toLocaleDateString('fr-FR') : 'N/A'}
               </p>
             </div>
           </div>
