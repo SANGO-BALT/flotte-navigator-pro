@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { X, User, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -46,7 +45,11 @@ const UserModal: React.FC<UserModalProps> = ({ user, onClose, onSave }) => {
     leaveStatus: 'none',
     leaveStartDate: '',
     leaveEndDate: '',
+    image: '',
   });
+
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
 
   useEffect(() => {
     if (user) {
@@ -66,7 +69,9 @@ const UserModal: React.FC<UserModalProps> = ({ user, onClose, onSave }) => {
         leaveStatus: user.leaveStatus || 'none',
         leaveStartDate: user.leaveStartDate || '',
         leaveEndDate: user.leaveEndDate || '',
+        image: (user as any).image || '',
       });
+      setImagePreview((user as any).image || '');
     }
   }, [user]);
 
@@ -84,6 +89,20 @@ const UserModal: React.FC<UserModalProps> = ({ user, onClose, onSave }) => {
       ...prev,
       [e.target.name]: e.target.value
     }));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setImagePreview(result);
+        setFormData(prev => ({ ...prev, image: result }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -109,14 +128,34 @@ const UserModal: React.FC<UserModalProps> = ({ user, onClose, onSave }) => {
             <label className="block text-sm font-medium text-foreground mb-2">
               Photo de profil
             </label>
-            <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
-              <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">
-                Cliquez pour télécharger ou glissez une photo
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                JPG, PNG ou GIF (max. 2MB)
-              </p>
+            <div className="space-y-4">
+              {imagePreview && (
+                <div className="flex justify-center">
+                  <img
+                    src={imagePreview}
+                    alt="Aperçu"
+                    className="w-24 h-24 object-cover rounded-full border"
+                  />
+                </div>
+              )}
+              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                  id="user-image"
+                />
+                <label htmlFor="user-image" className="cursor-pointer">
+                  <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    Cliquez pour télécharger ou glissez une photo
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    JPG, PNG ou GIF (max. 2MB)
+                  </p>
+                </label>
+              </div>
             </div>
           </div>
 

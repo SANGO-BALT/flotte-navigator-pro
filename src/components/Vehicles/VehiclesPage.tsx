@@ -32,6 +32,7 @@ const VehiclesPage: React.FC = () => {
       fuel: 'diesel',
       insurance: 'ASS123456789',
       registrationCard: 'CG123456789',
+      vehicleFunction: 'transport-personnel',
     },
     {
       id: '2',
@@ -51,6 +52,7 @@ const VehiclesPage: React.FC = () => {
       fuel: 'diesel',
       insurance: 'ASS987654321',
       registrationCard: 'CG987654321',
+      vehicleFunction: 'transport-fret',
     },
     {
       id: '3',
@@ -70,6 +72,7 @@ const VehiclesPage: React.FC = () => {
       fuel: 'essence',
       insurance: 'ASS456789123',
       registrationCard: 'CG456789123',
+      vehicleFunction: 'liaison',
     },
   ]);
 

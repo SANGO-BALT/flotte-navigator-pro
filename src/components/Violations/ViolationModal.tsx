@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -199,14 +198,14 @@ const ViolationModal: React.FC<ViolationModalProps> = ({ violation, onClose, onS
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Montant (€) *
+                Montant (FCFA) *
               </label>
               <Input
                 name="amount"
                 type="number"
                 value={formData.amount}
                 onChange={handleChange}
-                placeholder="135"
+                placeholder="75000"
                 required
               />
             </div>

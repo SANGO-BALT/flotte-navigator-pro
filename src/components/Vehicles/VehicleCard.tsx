@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
-import { Calendar, MapPin, Wrench, AlertTriangle, Edit, Eye } from 'lucide-react';
+import { Calendar, MapPin, Wrench, AlertTriangle, Edit, Eye, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import VehicleModal from './VehicleModal';
+import VehiclePrintModal from './VehiclePrintModal';
 
 interface Vehicle {
   id?: string;
@@ -19,6 +19,7 @@ interface Vehicle {
   transmission: string;
   insurance: string;
   registrationCard: string;
+  vehicleFunction: string;
   image?: string;
   status?: string;
   nextMaintenance?: string;
@@ -32,6 +33,7 @@ interface VehicleCardProps {
 const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onUpdate }) => {
   const [showModal, setShowModal] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [showPrintModal, setShowPrintModal] = useState(false);
 
   // Calcul des années de service
   const serviceYears = new Date().getFullYear() - new Date(vehicle.serviceDate).getFullYear();
@@ -107,6 +109,11 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onUpdate }) => {
               </span>
             </div>
 
+            <div className="flex items-center justify-between">
+              <span>Fonction:</span>
+              <span className="font-medium text-foreground">{vehicle.vehicleFunction || 'N/A'}</span>
+            </div>
+
             {showDetails && (
               <div className="space-y-2 pt-2 border-t border-border">
                 <div className="flex items-center justify-between">
@@ -158,6 +165,10 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onUpdate }) => {
               <Edit className="w-4 h-4 mr-1" />
               Modifier
             </Button>
+            <Button variant="outline" size="sm" onClick={() => setShowPrintModal(true)}>
+              <Printer className="w-4 h-4 mr-1" />
+              Imprimer
+            </Button>
           </div>
         </div>
       </div>
@@ -167,6 +178,13 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onUpdate }) => {
           vehicle={vehicle}
           onClose={() => setShowModal(false)}
           onSave={handleUpdate}
+        />
+      )}
+
+      {showPrintModal && (
+        <VehiclePrintModal 
+          vehicle={vehicle}
+          onClose={() => setShowPrintModal(false)}
         />
       )}
     </>

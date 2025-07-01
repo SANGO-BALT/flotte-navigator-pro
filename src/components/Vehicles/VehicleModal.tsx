@@ -19,6 +19,7 @@ interface Vehicle {
   transmission: string;
   insurance: string;
   registrationCard: string;
+  vehicleFunction: string;
   status?: string;
   nextMaintenance?: string;
 }
@@ -44,9 +45,14 @@ const VehicleModal: React.FC<VehicleModalProps> = ({ vehicle, onClose, onSave })
     transmission: 'manuelle',
     insurance: '',
     registrationCard: '',
+    vehicleFunction: 'fonction',
     status: 'active',
     nextMaintenance: '',
+    image: '',
   });
+
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
 
   useEffect(() => {
     if (vehicle) {
@@ -64,9 +70,12 @@ const VehicleModal: React.FC<VehicleModalProps> = ({ vehicle, onClose, onSave })
         transmission: vehicle.transmission || 'manuelle',
         insurance: vehicle.insurance || '',
         registrationCard: vehicle.registrationCard || '',
+        vehicleFunction: vehicle.vehicleFunction || 'fonction',
         status: (vehicle as any).status || 'active',
         nextMaintenance: (vehicle as any).nextMaintenance || '',
+        image: (vehicle as any).image || '',
       });
+      setImagePreview((vehicle as any).image || '');
     }
   }, [vehicle]);
 
@@ -85,6 +94,20 @@ const VehicleModal: React.FC<VehicleModalProps> = ({ vehicle, onClose, onSave })
       ...prev,
       [e.target.name]: e.target.value
     }));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setImagePreview(result);
+        setFormData(prev => ({ ...prev, image: result }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -110,11 +133,31 @@ const VehicleModal: React.FC<VehicleModalProps> = ({ vehicle, onClose, onSave })
             <label className="block text-sm font-medium text-foreground mb-2">
               Photo du véhicule
             </label>
-            <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
-              <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">
-                Cliquez pour télécharger ou glissez une image
-              </p>
+            <div className="space-y-4">
+              {imagePreview && (
+                <div className="flex justify-center">
+                  <img
+                    src={imagePreview}
+                    alt="Aperçu"
+                    className="w-32 h-24 object-cover rounded-lg border"
+                  />
+                </div>
+              )}
+              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                  id="vehicle-image"
+                />
+                <label htmlFor="vehicle-image" className="cursor-pointer">
+                  <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    Cliquez pour télécharger ou glissez une image
+                  </p>
+                </label>
+              </div>
             </div>
           </div>
 
@@ -147,6 +190,25 @@ const VehicleModal: React.FC<VehicleModalProps> = ({ vehicle, onClose, onSave })
                 <option value="utilitaire">Utilitaire</option>
                 <option value="moto">Moto</option>
                 <option value="camion">Camion</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Fonction du véhicule *
+              </label>
+              <select
+                name="vehicleFunction"
+                value={formData.vehicleFunction}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+              >
+                <option value="fonction">Fonction</option>
+                <option value="liaison">Liaison</option>
+                <option value="transport-personnel">Transport du personnel</option>
+                <option value="transport-fret">Transport fret</option>
+                <option value="transport-voyageur">Transport voyageur</option>
+                <option value="taxi">Taxi</option>
               </select>
             </div>
 
