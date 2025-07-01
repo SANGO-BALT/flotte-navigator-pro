@@ -1,8 +1,9 @@
 
 import React, { useState } from 'react';
-import { MapPin, Navigation, Search, Filter } from 'lucide-react';
+import { MapPin, Navigation, Search, Filter, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import MapComponent from './MapComponent';
 
 const GPSPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -56,6 +57,16 @@ const GPSPage: React.FC = () => {
     'hors-ligne': 'bg-red-100 text-red-800',
   };
 
+  const handleRefresh = () => {
+    console.log('Actualisation des positions GPS...');
+    // Simulation de rafraîchissement
+  };
+
+  const handleViewHistory = (vehicleId: string) => {
+    console.log('Voir historique GPS du véhicule:', vehicleId);
+    alert('Historique GPS - Fonctionnalité en développement');
+  };
+
   return (
     <div className="p-6">
       {/* Header avec recherche et filtres */}
@@ -84,6 +95,11 @@ const GPSPage: React.FC = () => {
             ))}
           </select>
           
+          <Button onClick={handleRefresh} variant="outline">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Actualiser
+          </Button>
+          
           <Button className="fleet-button-primary">
             <Filter className="w-4 h-4 mr-2" />
             Filtres avancés
@@ -92,11 +108,11 @@ const GPSPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Carte (placeholder) */}
+        {/* Carte avec OpenStreetMap intégré */}
         <div className="lg:col-span-2">
           <div className="fleet-card h-96">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-foreground">Carte en temps réel</h3>
+              <h3 className="text-lg font-semibold text-foreground">Carte temps réel - OpenStreetMap</h3>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm">
                   <Navigation className="w-4 h-4 mr-2" />
@@ -108,13 +124,12 @@ const GPSPage: React.FC = () => {
               </div>
             </div>
             
-            {/* Placeholder pour OpenStreetMap */}
-            <div className="w-full h-80 bg-muted rounded-lg flex items-center justify-center border-2 border-dashed border-border">
-              <div className="text-center">
-                <MapPin className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
-                <p className="text-muted-foreground font-medium">Carte OpenStreetMap</p>
-                <p className="text-sm text-muted-foreground">Intégration en cours de développement</p>
-              </div>
+            {/* Carte OpenStreetMap intégrée */}
+            <div className="w-full h-80">
+              <MapComponent 
+                vehicles={filteredVehicles} 
+                selectedVehicle={selectedVehicle !== 'all' ? selectedVehicle : undefined}
+              />
             </div>
           </div>
         </div>
@@ -148,16 +163,32 @@ const GPSPage: React.FC = () => {
                   </div>
                 )}
                 
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    GPS: {vehicle.coordinates.lat.toFixed(4)}, {vehicle.coordinates.lng.toFixed(4)}
+                  </span>
+                </div>
+                
                 <p className="text-xs text-muted-foreground">
                   Dernière mise à jour: {vehicle.lastUpdate}
                 </p>
               </div>
               
               <div className="flex gap-2 mt-3">
-                <Button variant="outline" size="sm" className="flex-1">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => setSelectedVehicle(vehicle.id)}
+                >
                   Localiser
                 </Button>
-                <Button variant="outline" size="sm" className="flex-1">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => handleViewHistory(vehicle.id)}
+                >
                   Historique
                 </Button>
               </div>

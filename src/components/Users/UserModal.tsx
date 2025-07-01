@@ -18,6 +18,9 @@ interface User {
   licenseNumber: string;
   status: string;
   joinDate: string;
+  leaveStatus?: string;
+  leaveStartDate?: string;
+  leaveEndDate?: string;
 }
 
 interface UserModalProps {
@@ -40,6 +43,9 @@ const UserModal: React.FC<UserModalProps> = ({ user, onClose, onSave }) => {
     licenseNumber: '',
     status: 'active',
     joinDate: new Date().toISOString().split('T')[0],
+    leaveStatus: 'none',
+    leaveStartDate: '',
+    leaveEndDate: '',
   });
 
   useEffect(() => {
@@ -57,6 +63,9 @@ const UserModal: React.FC<UserModalProps> = ({ user, onClose, onSave }) => {
         licenseNumber: user.licenseNumber,
         status: user.status,
         joinDate: user.joinDate,
+        leaveStatus: user.leaveStatus || 'none',
+        leaveStartDate: user.leaveStartDate || '',
+        leaveEndDate: user.leaveEndDate || '',
       });
     }
   }, [user]);
@@ -292,6 +301,58 @@ const UserModal: React.FC<UserModalProps> = ({ user, onClose, onSave }) => {
                 value={formData.joinDate}
                 onChange={handleChange}
               />
+            </div>
+          </div>
+
+          {/* Gestion des congés */}
+          <div>
+            <h3 className="text-lg font-medium text-foreground mb-4">Gestion des congés</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-3">
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Type de congé
+                </label>
+                <select
+                  name="leaveStatus"
+                  value={formData.leaveStatus}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                >
+                  <option value="none">Aucun congé en cours</option>
+                  <option value="leave">Congé</option>
+                  <option value="mission">Mission</option>
+                  <option value="sick">Congé maladie</option>
+                  <option value="maternity">Congé maternité</option>
+                </select>
+              </div>
+
+              {formData.leaveStatus !== 'none' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Date de début
+                    </label>
+                    <Input
+                      name="leaveStartDate"
+                      type="date"
+                      value={formData.leaveStartDate}
+                      onChange={handleChange}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Date de fin
+                    </label>
+                    <Input
+                      name="leaveEndDate"
+                      type="date"
+                      value={formData.leaveEndDate}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
 

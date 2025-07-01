@@ -1,14 +1,31 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Wrench } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-interface MaintenanceModalProps {
-  onClose: () => void;
+interface Maintenance {
+  id?: string;
+  vehiclePlate: string;
+  vehicleBrand?: string;
+  type: string;
+  scheduledDate: string;
+  description: string;
+  priority: string;
+  estimatedCost: string;
+  garage: string;
+  status?: string;
+  completedDate?: string;
+  finalCost?: string;
 }
 
-const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ onClose }) => {
+interface MaintenanceModalProps {
+  maintenance?: Maintenance | null;
+  onClose: () => void;
+  onSave?: (maintenanceData: any) => void;
+}
+
+const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ maintenance, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     vehiclePlate: '',
     type: 'révision',
@@ -17,11 +34,34 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ onClose }) => {
     priority: 'normale',
     estimatedCost: '',
     garage: '',
+    status: 'planifiée',
+    completedDate: '',
+    finalCost: '',
   });
+
+  useEffect(() => {
+    if (maintenance) {
+      setFormData({
+        vehiclePlate: maintenance.vehiclePlate || '',
+        type: maintenance.type || 'révision',
+        scheduledDate: maintenance.scheduledDate || '',
+        description: maintenance.description || '',
+        priority: maintenance.priority || 'normale',
+        estimatedCost: maintenance.estimatedCost?.toString() || '',
+        garage: maintenance.garage || '',
+        status: maintenance.status || 'planifiée',
+        completedDate: maintenance.completedDate || '',
+        finalCost: maintenance.finalCost?.toString() || '',
+      });
+    }
+  }, [maintenance]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Nouvelle maintenance:', formData);
+    console.log(maintenance ? 'Modifier maintenance:' : 'Nouvelle maintenance:', formData);
+    if (onSave) {
+      onSave(formData);
+    }
     onClose();
   };
 
@@ -40,7 +80,9 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ onClose }) => {
             <div className="p-2 bg-primary/10 rounded-lg">
               <Wrench className="w-6 h-6 text-primary" />
             </div>
-            <h2 className="text-xl font-semibold text-foreground">Programmer une maintenance</h2>
+            <h2 className="text-xl font-semibold text-foreground">
+              {maintenance ? 'Modifier la maintenance' : 'Programmer une maintenance'}
+            </h2>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="w-5 h-5" />
@@ -109,6 +151,26 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ onClose }) => {
             </select>
           </div>
 
+          {/* Statut pour modification */}
+          {maintenance && (
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Statut
+              </label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+              >
+                <option value="planifiée">Planifiée</option>
+                <option value="en-cours">En cours</option>
+                <option value="terminée">Terminée</option>
+                <option value="annulée">Annulée</option>
+              </select>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
               Description
@@ -150,12 +212,42 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ onClose }) => {
             </div>
           </div>
 
+          {/* Champs additionnels pour maintenance terminée */}
+          {maintenance && formData.status === 'terminée' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Date de fin
+                </label>
+                <Input
+                  name="completedDate"
+                  type="date"
+                  value={formData.completedDate}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Coût final (€)
+                </label>
+                <Input
+                  name="finalCost"
+                  type="number"
+                  value={formData.finalCost}
+                  onChange={handleChange}
+                  placeholder="275"
+                />
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-end space-x-3 pt-4 border-t border-border">
             <Button type="button" variant="outline" onClick={onClose}>
               Annuler
             </Button>
             <Button type="submit" className="fleet-button-primary">
-              Programmer
+              {maintenance ? 'Modifier' : 'Programmer'}
             </Button>
           </div>
         </form>

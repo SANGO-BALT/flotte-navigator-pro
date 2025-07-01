@@ -1,14 +1,35 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Upload, Car } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-interface VehicleModalProps {
-  onClose: () => void;
+interface Vehicle {
+  id?: string;
+  plate: string;
+  brand: string;
+  model: string;
+  type: string;
+  year: string;
+  serviceDate: string;
+  circulationDate: string;
+  mileage: string;
+  engine: string;
+  fuel: string;
+  transmission: string;
+  insurance: string;
+  registrationCard: string;
+  status?: string;
+  nextMaintenance?: string;
 }
 
-const VehicleModal: React.FC<VehicleModalProps> = ({ onClose }) => {
+interface VehicleModalProps {
+  vehicle?: Vehicle | null;
+  onClose: () => void;
+  onSave?: (vehicleData: any) => void;
+}
+
+const VehicleModal: React.FC<VehicleModalProps> = ({ vehicle, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     plate: '',
     brand: '',
@@ -23,12 +44,39 @@ const VehicleModal: React.FC<VehicleModalProps> = ({ onClose }) => {
     transmission: 'manuelle',
     insurance: '',
     registrationCard: '',
+    status: 'active',
+    nextMaintenance: '',
   });
+
+  useEffect(() => {
+    if (vehicle) {
+      setFormData({
+        plate: vehicle.plate || '',
+        brand: vehicle.brand || '',
+        model: vehicle.model || '',
+        type: vehicle.type?.toLowerCase() || 'voiture',
+        year: vehicle.year?.toString() || '',
+        serviceDate: vehicle.serviceDate || '',
+        circulationDate: vehicle.circulationDate || '',
+        mileage: vehicle.mileage?.toString() || '',
+        engine: vehicle.engine || '',
+        fuel: vehicle.fuel || 'essence',
+        transmission: vehicle.transmission || 'manuelle',
+        insurance: vehicle.insurance || '',
+        registrationCard: vehicle.registrationCard || '',
+        status: (vehicle as any).status || 'active',
+        nextMaintenance: (vehicle as any).nextMaintenance || '',
+      });
+    }
+  }, [vehicle]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Nouveau véhicule:', formData);
-    // Ici vous pourrez ajouter la logique pour sauvegarder
+    console.log(vehicle ? 'Modifier véhicule:' : 'Nouveau véhicule:', formData);
+    if (onSave) {
+      const dataToSave = vehicle ? { ...formData, id: vehicle.id } : formData;
+      onSave(dataToSave);
+    }
     onClose();
   };
 
@@ -47,7 +95,9 @@ const VehicleModal: React.FC<VehicleModalProps> = ({ onClose }) => {
             <div className="p-2 bg-primary/10 rounded-lg">
               <Car className="w-6 h-6 text-primary" />
             </div>
-            <h2 className="text-xl font-semibold text-foreground">Ajouter un véhicule</h2>
+            <h2 className="text-xl font-semibold text-foreground">
+              {vehicle ? 'Modifier le véhicule' : 'Ajouter un véhicule'}
+            </h2>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="w-5 h-5" />
@@ -218,7 +268,7 @@ const VehicleModal: React.FC<VehicleModalProps> = ({ onClose }) => {
 
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Boîte de vitesse
+                Boîte de vitesse *
               </label>
               <select
                 name="transmission"
@@ -232,6 +282,39 @@ const VehicleModal: React.FC<VehicleModalProps> = ({ onClose }) => {
               </select>
             </div>
           </div>
+
+          {/* Statut et maintenance (pour modification) */}
+          {vehicle && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Statut
+                </label>
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                >
+                  <option value="active">En service</option>
+                  <option value="maintenance">Maintenance</option>
+                  <option value="inactive">Hors service</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Prochaine maintenance
+                </label>
+                <Input
+                  name="nextMaintenance"
+                  type="date"
+                  value={formData.nextMaintenance}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Documents */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -266,7 +349,7 @@ const VehicleModal: React.FC<VehicleModalProps> = ({ onClose }) => {
               Annuler
             </Button>
             <Button type="submit" className="fleet-button-primary">
-              Ajouter le véhicule
+              {vehicle ? 'Modifier' : 'Ajouter'} le véhicule
             </Button>
           </div>
         </form>

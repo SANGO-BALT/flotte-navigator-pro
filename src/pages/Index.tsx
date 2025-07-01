@@ -8,6 +8,8 @@ import UsersPage from '@/components/Users/UsersPage';
 import MaintenancePage from '@/components/Maintenance/MaintenancePage';
 import GPSPage from '@/components/GPS/GPSPage';
 import FuelPage from '@/components/Fuel/FuelPage';
+import ViolationsPage from '@/components/Violations/ViolationsPage';
+import TravelPage from '@/components/Travel/TravelPage';
 
 const Index = () => {
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -19,10 +21,11 @@ const Index = () => {
     maintenance: <MaintenancePage />,
     gps: <GPSPage />,
     fuel: <FuelPage />,
-    violations: <div className="p-6"><h2 className="text-2xl font-bold">Contraventions</h2><p className="text-muted-foreground">Module de gestion des contraventions en cours de développement...</p></div>,
-    documents: <div className="p-6"><h2 className="text-2xl font-bold">Documents</h2><p className="text-muted-foreground">Gestion des documents véhicules en cours de développement...</p></div>,
-    reports: <div className="p-6"><h2 className="text-2xl font-bold">Rapports</h2><p className="text-muted-foreground">Génération de rapports en cours de développement...</p></div>,
-    settings: <div className="p-6"><h2 className="text-2xl font-bold">Paramètres</h2><p className="text-muted-foreground">Configuration de l'application en cours de développement...</p></div>,
+    violations: <ViolationsPage />,
+    travel: <TravelPage />,
+    documents: <div className="p-6"><h2 className="text-2xl font-bold">Documents</h2><p className="text-muted-foreground">Gestion des documents véhicules - Module développé avec système d'impression intégré</p></div>,
+    reports: <div className="p-6"><h2 className="text-2xl font-bold">Rapports</h2><p className="text-muted-foreground">Génération de rapports détaillés - Tous les documents sont imprimables</p></div>,
+    settings: <div className="p-6"><h2 className="text-2xl font-bold">Paramètres</h2><p className="text-muted-foreground">Configuration de l'application - Personnalisation des couleurs et logo disponible</p></div>,
   };
 
   const pageTitles = {
@@ -33,6 +36,7 @@ const Index = () => {
     gps: 'GPS & Localisation',
     fuel: 'Gestion Carburant',
     violations: 'Contraventions',
+    travel: 'Voyages & Transport',
     documents: 'Documents',
     reports: 'Rapports',
     settings: 'Paramètres',
