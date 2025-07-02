@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { MapPin, Navigation, Search, Filter, RefreshCw, Calendar, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,7 +12,7 @@ const GPSPage: React.FC = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [selectedVehicleForHistory, setSelectedVehicleForHistory] = useState<string>('');
 
-  // Véhicules avec coordonnées dans les limites du Gabon
+  // Véhicules avec coordonnées réelles du Gabon
   const vehicles = [
     {
       id: '1',
@@ -23,7 +22,7 @@ const GPSPage: React.FC = () => {
       location: 'Avenue Bouet, Libreville',
       speed: 45,
       lastUpdate: '2024-07-01 14:30',
-      coordinates: { lat: 0.4162, lng: 9.4673 }, // Libreville
+      coordinates: { lat: 0.4162, lng: 9.4673 }, // Libreville (capitale)
     },
     {
       id: '2',
@@ -33,7 +32,7 @@ const GPSPage: React.FC = () => {
       location: 'Port Môle, Port-Gentil',
       speed: 0,
       lastUpdate: '2024-07-01 14:25',
-      coordinates: { lat: -0.7193, lng: 8.7815 }, // Port-Gentil
+      coordinates: { lat: -0.7193, lng: 8.7815 }, // Port-Gentil (ville pétrolière)
     },
     {
       id: '3',
@@ -43,7 +42,7 @@ const GPSPage: React.FC = () => {
       location: 'Centre-ville, Franceville',
       speed: 30,
       lastUpdate: '2024-07-01 14:32',
-      coordinates: { lat: -1.6332, lng: 13.5833 }, // Franceville
+      coordinates: { lat: -1.6332, lng: 13.5833 }, // Franceville (sud-est)
     },
     {
       id: '4',
@@ -53,7 +52,17 @@ const GPSPage: React.FC = () => {
       location: 'Route Nationale, Oyem',
       speed: 0,
       lastUpdate: '2024-07-01 13:45',
-      coordinates: { lat: 1.5993, lng: 11.5793 }, // Oyem
+      coordinates: { lat: 1.5993, lng: 11.5793 }, // Oyem (nord)
+    },
+    {
+      id: '5',
+      plate: 'QR-345-ST',
+      brand: 'Mercedes Sprinter',
+      status: 'en-mouvement',
+      location: 'Lambaréné, Route Albert Schweitzer',
+      speed: 55,
+      lastUpdate: '2024-07-01 14:35',
+      coordinates: { lat: -0.6998, lng: 10.2443 }, // Lambaréné (centre)
     },
   ];
 
@@ -81,7 +90,6 @@ const GPSPage: React.FC = () => {
 
   const handleRefresh = () => {
     console.log('Actualisation des positions GPS...');
-    // Simulation de rafraîchissement avec notification
     alert('Positions GPS actualisées');
   };
 
@@ -98,7 +106,7 @@ const GPSPage: React.FC = () => {
 
   return (
     <div className="p-6">
-      {/* Header avec recherche et filtres améliorés */}
+      {/* Header avec recherche et filtres */}
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 relative">
@@ -147,7 +155,7 @@ const GPSPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Filtres avancés */}
+        {/* Filtres rapides par statut */}
         <div className="flex gap-2 text-sm">
           <Button variant={statusFilter === 'en-mouvement' ? 'default' : 'outline'} size="sm"
                   onClick={() => setStatusFilter(statusFilter === 'en-mouvement' ? 'all' : 'en-mouvement')}>
@@ -176,7 +184,7 @@ const GPSPage: React.FC = () => {
               <div className="flex gap-2">
                 <Button variant="outline" size="sm">
                   <Navigation className="w-4 h-4 mr-2" />
-                  Centrer
+                  Centrer sur Gabon
                 </Button>
                 <Button variant="outline" size="sm">
                   Plein écran
@@ -193,10 +201,10 @@ const GPSPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Liste des véhicules */}
+        {/* Liste des véhicules avec coordonnées du Gabon */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-foreground">
-            Véhicules trackés ({filteredVehicles.length})
+            Véhicules trackés au Gabon ({filteredVehicles.length})
           </h3>
           
           {filteredVehicles.map((vehicle) => (
@@ -226,14 +234,14 @@ const GPSPage: React.FC = () => {
                 
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">
-                    GPS: {vehicle.coordinates.lat.toFixed(4)}, {vehicle.coordinates.lng.toFixed(4)}
+                    Coordonnées Gabon: {vehicle.coordinates.lat.toFixed(4)}°, {vehicle.coordinates.lng.toFixed(4)}°
                   </span>
                 </div>
                 
                 <div className="flex items-center gap-2">
                   <Clock className="w-3 h-3 text-muted-foreground" />
                   <p className="text-xs text-muted-foreground">
-                    {vehicle.lastUpdate}
+                    Dernière mise à jour: {vehicle.lastUpdate}
                   </p>
                 </div>
               </div>
@@ -245,7 +253,7 @@ const GPSPage: React.FC = () => {
                   className="flex-1"
                   onClick={() => setSelectedVehicle(vehicle.id)}
                 >
-                  Localiser
+                  Localiser sur carte
                 </Button>
                 <Button 
                   variant="outline" 
@@ -254,7 +262,7 @@ const GPSPage: React.FC = () => {
                   onClick={() => handleViewHistory(vehicle.id)}
                 >
                   <Calendar className="w-3 h-3 mr-1" />
-                  Historique
+                  Historique GPS
                 </Button>
               </div>
             </div>
@@ -263,20 +271,20 @@ const GPSPage: React.FC = () => {
           {filteredVehicles.length === 0 && (
             <div className="text-center py-8">
               <MapPin className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
-              <p className="text-muted-foreground">Aucun véhicule trouvé</p>
+              <p className="text-muted-foreground">Aucun véhicule trouvé au Gabon</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Statistiques améliorées */}
+      {/* Statistiques GPS Gabon */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
         <div className="fleet-card text-center">
           <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
             <div className="w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
           </div>
           <p className="text-2xl font-bold text-foreground">{vehicles.filter(v => v.status === 'en-mouvement').length}</p>
-          <p className="text-sm text-muted-foreground">En mouvement</p>
+          <p className="text-sm text-muted-foreground">En mouvement au Gabon</p>
         </div>
         <div className="fleet-card text-center">
           <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2">

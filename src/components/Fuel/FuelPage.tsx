@@ -1,15 +1,19 @@
 
 import React, { useState } from 'react';
-import { Search, Plus, Fuel, TrendingUp, Calendar } from 'lucide-react';
+import { Search, Plus, Fuel, TrendingUp, Calendar, Eye, Edit, Trash, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import FuelModal from './FuelModal';
+import FuelTicketModal from './FuelTicketModal';
 
 const FuelPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showTicketModal, setShowTicketModal] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState(null);
+  const [editingRecord, setEditingRecord] = useState(null);
 
-  const fuelRecords = [
+  const [fuelRecords, setFuelRecords] = useState([
     {
       id: '1',
       vehiclePlate: 'AB-123-CD',
@@ -17,8 +21,8 @@ const FuelPage: React.FC = () => {
       date: '2024-07-01',
       fuelType: 'Diesel',
       quantity: 45,
-      unitPrice: 1.52,
-      totalCost: 68.40,
+      unitPrice: 650,
+      totalCost: 29250,
       station: 'Total Station Centre',
       mileage: 85340,
     },
@@ -29,9 +33,9 @@ const FuelPage: React.FC = () => {
       date: '2024-06-30',
       fuelType: 'Diesel',
       quantity: 65,
-      unitPrice: 1.48,
-      totalCost: 96.20,
-      station: 'Shell Autoroute A6',
+      unitPrice: 640,
+      totalCost: 41600,
+      station: 'Shell Autoroute',
       mileage: 120450,
     },
     {
@@ -41,12 +45,12 @@ const FuelPage: React.FC = () => {
       date: '2024-06-29',
       fuelType: 'Essence',
       quantity: 15,
-      unitPrice: 1.67,
-      totalCost: 25.05,
+      unitPrice: 750,
+      totalCost: 11250,
       station: 'Esso Centre Ville',
       mileage: 45120,
     },
-  ];
+  ]);
 
   const filteredRecords = fuelRecords.filter(record =>
     record.vehiclePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -57,6 +61,44 @@ const FuelPage: React.FC = () => {
   const totalCost = fuelRecords.reduce((sum, record) => sum + record.totalCost, 0);
   const totalQuantity = fuelRecords.reduce((sum, record) => sum + record.quantity, 0);
   const averagePrice = totalCost / totalQuantity;
+
+  const handleView = (record) => {
+    setSelectedRecord(record);
+    setShowTicketModal(true);
+  };
+
+  const handleEdit = (record) => {
+    setEditingRecord(record);
+    setShowModal(true);
+  };
+
+  const handleDelete = (recordId) => {
+    if (confirm('Êtes-vous sûr de vouloir supprimer ce plein ?')) {
+      setFuelRecords(fuelRecords.filter(record => record.id !== recordId));
+    }
+  };
+
+  const handlePrintTicket = (record) => {
+    setSelectedRecord(record);
+    setShowTicketModal(true);
+  };
+
+  const handleSave = (recordData) => {
+    if (editingRecord) {
+      setFuelRecords(fuelRecords.map(record => 
+        record.id === editingRecord.id 
+          ? { ...recordData, id: editingRecord.id }
+          : record
+      ));
+    } else {
+      const newRecord = {
+        ...recordData,
+        id: Date.now().toString(),
+      };
+      setFuelRecords([...fuelRecords, newRecord]);
+    }
+    setEditingRecord(null);
+  };
 
   return (
     <div className="p-6">
@@ -78,7 +120,7 @@ const FuelPage: React.FC = () => {
         </Button>
       </div>
 
-      {/* Statistiques */}
+      {/* Statistiques en FCFA */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="fleet-card text-center">
           <Fuel className="w-8 h-8 text-blue-500 mx-auto mb-2" />
@@ -89,12 +131,12 @@ const FuelPage: React.FC = () => {
           <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
             <div className="w-4 h-4 bg-green-500 rounded-full"></div>
           </div>
-          <p className="text-2xl font-bold text-foreground">{totalCost.toFixed(0)}€</p>
+          <p className="text-2xl font-bold text-foreground">{totalCost.toLocaleString()} FCFA</p>
           <p className="text-sm text-muted-foreground">Coût total</p>
         </div>
         <div className="fleet-card text-center">
           <TrendingUp className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-          <p className="text-2xl font-bold text-foreground">{averagePrice.toFixed(2)}€/L</p>
+          <p className="text-2xl font-bold text-foreground">{averagePrice.toFixed(0)} FCFA/L</p>
           <p className="text-sm text-muted-foreground">Prix moyen</p>
         </div>
         <div className="fleet-card text-center">
@@ -104,7 +146,7 @@ const FuelPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Liste des pleins */}
+      {/* Liste des pleins avec actions */}
       <div className="fleet-card">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-foreground">Historique des pleins</h3>
@@ -129,7 +171,7 @@ const FuelPage: React.FC = () => {
                 <th className="text-left py-3 px-4 font-semibold text-foreground">Prix/L</th>
                 <th className="text-left py-3 px-4 font-semibold text-foreground">Total</th>
                 <th className="text-left py-3 px-4 font-semibold text-foreground">Station</th>
-                <th className="text-left py-3 px-4 font-semibold text-foreground">Km</th>
+                <th className="text-left py-3 px-4 font-semibold text-foreground">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -155,16 +197,29 @@ const FuelPage: React.FC = () => {
                     <p className="text-sm font-semibold text-foreground">{record.quantity}L</p>
                   </td>
                   <td className="py-3 px-4">
-                    <p className="text-sm text-foreground">{record.unitPrice.toFixed(2)}€</p>
+                    <p className="text-sm text-foreground">{record.unitPrice.toLocaleString()} FCFA</p>
                   </td>
                   <td className="py-3 px-4">
-                    <p className="text-sm font-bold text-foreground">{record.totalCost.toFixed(2)}€</p>
+                    <p className="text-sm font-bold text-foreground">{record.totalCost.toLocaleString()} FCFA</p>
                   </td>
                   <td className="py-3 px-4">
                     <p className="text-sm text-foreground">{record.station}</p>
                   </td>
                   <td className="py-3 px-4">
-                    <p className="text-sm text-muted-foreground">{record.mileage.toLocaleString()}</p>
+                    <div className="flex items-center space-x-1">
+                      <Button variant="ghost" size="sm" onClick={() => handleView(record)} title="Voir">
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handlePrintTicket(record)} title="Imprimer ticket">
+                        <Printer className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleEdit(record)} title="Modifier">
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleDelete(record.id)} title="Supprimer">
+                        <Trash className="w-4 h-4 text-red-500" />
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -173,9 +228,27 @@ const FuelPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal d'ajout de plein */}
+      {/* Modal d'ajout/modification de plein */}
       {showModal && (
-        <FuelModal onClose={() => setShowModal(false)} />
+        <FuelModal 
+          record={editingRecord}
+          onClose={() => {
+            setShowModal(false);
+            setEditingRecord(null);
+          }}
+          onSave={handleSave}
+        />
+      )}
+
+      {/* Modal de ticket d'impression */}
+      {showTicketModal && selectedRecord && (
+        <FuelTicketModal
+          record={selectedRecord}
+          onClose={() => {
+            setShowTicketModal(false);
+            setSelectedRecord(null);
+          }}
+        />
       )}
     </div>
   );

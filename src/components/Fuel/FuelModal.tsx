@@ -1,14 +1,16 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Fuel } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 interface FuelModalProps {
+  record?: any;
   onClose: () => void;
+  onSave?: (recordData: any) => void;
 }
 
-const FuelModal: React.FC<FuelModalProps> = ({ onClose }) => {
+const FuelModal: React.FC<FuelModalProps> = ({ record, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     vehiclePlate: '',
     date: new Date().toISOString().split('T')[0],
@@ -20,9 +22,35 @@ const FuelModal: React.FC<FuelModalProps> = ({ onClose }) => {
     notes: '',
   });
 
+  useEffect(() => {
+    if (record) {
+      setFormData({
+        vehiclePlate: record.vehiclePlate || '',
+        date: record.date || new Date().toISOString().split('T')[0],
+        fuelType: record.fuelType?.toLowerCase() || 'diesel',
+        quantity: record.quantity?.toString() || '',
+        unitPrice: record.unitPrice?.toString() || '',
+        station: record.station || '',
+        mileage: record.mileage?.toString() || '',
+        notes: record.notes || '',
+      });
+    }
+  }, [record]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Nouveau plein:', formData);
+    const recordData = {
+      ...formData,
+      quantity: parseFloat(formData.quantity),
+      unitPrice: parseFloat(formData.unitPrice),
+      totalCost: parseFloat(formData.quantity) * parseFloat(formData.unitPrice),
+      mileage: parseInt(formData.mileage),
+      fuelType: formData.fuelType.charAt(0).toUpperCase() + formData.fuelType.slice(1),
+    };
+    
+    if (onSave) {
+      onSave(recordData);
+    }
     onClose();
   };
 
@@ -33,6 +61,8 @@ const FuelModal: React.FC<FuelModalProps> = ({ onClose }) => {
     }));
   };
 
+  const totalCost = (parseFloat(formData.quantity) || 0) * (parseFloat(formData.unitPrice) || 0);
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-card rounded-lg w-full max-w-lg">
@@ -41,7 +71,9 @@ const FuelModal: React.FC<FuelModalProps> = ({ onClose }) => {
             <div className="p-2 bg-primary/10 rounded-lg">
               <Fuel className="w-6 h-6 text-primary" />
             </div>
-            <h2 className="text-xl font-semibold text-foreground">Ajouter un plein</h2>
+            <h2 className="text-xl font-semibold text-foreground">
+              {record ? 'Modifier le plein' : 'Ajouter un plein'}
+            </h2>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="w-5 h-5" />
@@ -112,19 +144,29 @@ const FuelModal: React.FC<FuelModalProps> = ({ onClose }) => {
 
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Prix/L (€) *
+                Prix/L (FCFA) *
               </label>
               <Input
                 name="unitPrice"
                 type="number"
-                step="0.001"
+                step="1"
                 value={formData.unitPrice}
                 onChange={handleChange}
-                placeholder="1.520"
+                placeholder="650"
                 required
               />
             </div>
           </div>
+
+          {/* Affichage du total calculé */}
+          {totalCost > 0 && (
+            <div className="bg-muted/50 p-3 rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-foreground">Total calculé:</span>
+                <span className="text-lg font-bold text-foreground">{totalCost.toLocaleString()} FCFA</span>
+              </div>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
@@ -170,7 +212,7 @@ const FuelModal: React.FC<FuelModalProps> = ({ onClose }) => {
               Annuler
             </Button>
             <Button type="submit" className="fleet-button-primary">
-              Enregistrer
+              {record ? 'Modifier' : 'Enregistrer'}
             </Button>
           </div>
         </form>
