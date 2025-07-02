@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Bus, Calendar, Clock, User, MapPin } from 'lucide-react';
+import { X, Bus, Calendar, Clock, Users, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -13,17 +13,18 @@ interface TravelModalProps {
 const TravelModal: React.FC<TravelModalProps> = ({ travel, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     vehiclePlate: '',
-    vehicleBrand: 'Mercedes Sprinter',
-    departure: 'Libreville',
-    destination: 'Port-Gentil',
+    vehicleBrand: '',
+    departure: '',
+    destination: '',
     departureDate: '',
-    departureTime: '08:00',
-    arrivalTime: '13:30',
+    departureTime: '',
+    arrivalTime: '',
+    passengers: 0,
     capacity: 30,
     driverName: '',
     status: 'programmé',
     price: 15000,
-    distance: 300,
+    distance: 0,
   });
 
   useEffect(() => {
@@ -34,16 +35,40 @@ const TravelModal: React.FC<TravelModalProps> = ({ travel, onClose, onSave }) =>
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({ ...formData, passengers: 0 });
+    onSave(formData);
     onClose();
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [name]: name === 'passengers' || name === 'capacity' || name === 'price' || name === 'distance' 
+        ? parseInt(value) || 0 
+        : value
     }));
   };
+
+  const vehicles = [
+    'AB-123-CD - Mercedes Sprinter',
+    'EF-456-GH - Renault Trafic',
+    'IJ-789-KL - Toyota Hiace',
+    'MN-012-OP - Peugeot Boxer'
+  ];
+
+  const drivers = [
+    'Jean Dupont',
+    'Marie Nguema',
+    'Paul Obame',
+    'Claire Mintsa'
+  ];
+
+  const routes = [
+    { departure: 'Libreville', destination: 'Port-Gentil', distance: 300 },
+    { departure: 'Libreville', destination: 'Franceville', distance: 650 },
+    { departure: 'Port-Gentil', destination: 'Lambaréné', distance: 120 },
+    { departure: 'Oyem', destination: 'Libreville', distance: 320 }
+  ];
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -62,35 +87,45 @@ const TravelModal: React.FC<TravelModalProps> = ({ travel, onClose, onSave }) =>
           </Button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Plaque véhicule *
+                Véhicule *
               </label>
-              <Input
+              <select
                 name="vehiclePlate"
                 value={formData.vehiclePlate}
                 onChange={handleChange}
-                placeholder="AB-123-CD"
                 required
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Marque véhicule
-              </label>
-              <select
-                name="vehicleBrand"
-                value={formData.vehicleBrand}
-                onChange={handleChange}
                 className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
               >
-                <option value="Mercedes Sprinter">Mercedes Sprinter</option>
-                <option value="Toyota Hiace">Toyota Hiace</option>
-                <option value="Nissan Urvan">Nissan Urvan</option>
-                <option value="Ford Transit">Ford Transit</option>
+                <option value="">Sélectionner un véhicule</option>
+                {vehicles.map(vehicle => (
+                  <option key={vehicle} value={vehicle.split(' - ')[0]}>
+                    {vehicle}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Chauffeur *
+              </label>
+              <select
+                name="driverName"
+                value={formData.driverName}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+              >
+                <option value="">Sélectionner un chauffeur</option>
+                {drivers.map(driver => (
+                  <option key={driver} value={driver}>
+                    {driver}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -98,36 +133,42 @@ const TravelModal: React.FC<TravelModalProps> = ({ travel, onClose, onSave }) =>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Départ *
+                Ville de départ *
               </label>
               <select
                 name="departure"
                 value={formData.departure}
                 onChange={handleChange}
+                required
                 className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
               >
+                <option value="">Sélectionner</option>
                 <option value="Libreville">Libreville</option>
                 <option value="Port-Gentil">Port-Gentil</option>
                 <option value="Franceville">Franceville</option>
                 <option value="Oyem">Oyem</option>
+                <option value="Lambaréné">Lambaréné</option>
                 <option value="Moanda">Moanda</option>
               </select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Destination *
+                Ville de destination *
               </label>
               <select
                 name="destination"
                 value={formData.destination}
                 onChange={handleChange}
+                required
                 className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
               >
-                <option value="Port-Gentil">Port-Gentil</option>
+                <option value="">Sélectionner</option>
                 <option value="Libreville">Libreville</option>
+                <option value="Port-Gentil">Port-Gentil</option>
                 <option value="Franceville">Franceville</option>
                 <option value="Oyem">Oyem</option>
+                <option value="Lambaréné">Lambaréné</option>
                 <option value="Moanda">Moanda</option>
               </select>
             </div>
@@ -139,108 +180,99 @@ const TravelModal: React.FC<TravelModalProps> = ({ travel, onClose, onSave }) =>
                 Date de départ *
               </label>
               <Input
-                name="departureDate"
                 type="date"
+                name="departureDate"
                 value={formData.departureDate}
                 onChange={handleChange}
                 required
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Heure départ
+                Heure de départ *
               </label>
               <Input
-                name="departureTime"
                 type="time"
+                name="departureTime"
                 value={formData.departureTime}
                 onChange={handleChange}
+                required
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Heure arrivée
+                Heure d'arrivée *
               </label>
               <Input
-                name="arrivalTime"
                 type="time"
+                name="arrivalTime"
                 value={formData.arrivalTime}
                 onChange={handleChange}
+                required
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
                 Capacité
               </label>
               <Input
-                name="capacity"
                 type="number"
+                name="capacity"
                 value={formData.capacity}
                 onChange={handleChange}
                 min="1"
                 max="50"
               />
             </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Prix (FCFA)
-              </label>
-              <Input
-                name="price"
-                type="number"
-                value={formData.price}
-                onChange={handleChange}
-                min="0"
-              />
-            </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
                 Distance (km)
               </label>
               <Input
-                name="distance"
                 type="number"
+                name="distance"
                 value={formData.distance}
                 onChange={handleChange}
-                min="0"
+                min="1"
               />
             </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Chauffeur
-            </label>
-            <Input
-              name="driverName"
-              value={formData.driverName}
-              onChange={handleChange}
-              placeholder="Nom du chauffeur"
-            />
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Prix (FCFA)
+              </label>
+              <Input
+                type="number"
+                name="price"
+                value={formData.price}
+                onChange={handleChange}
+                min="1000"
+                step="1000"
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Statut
-            </label>
-            <select
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-            >
-              <option value="programmé">Programmé</option>
-              <option value="en-cours">En cours</option>
-              <option value="terminé">Terminé</option>
-              <option value="annulé">Annulé</option>
-            </select>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Statut
+              </label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+              >
+                <option value="programmé">Programmé</option>
+                <option value="en-cours">En cours</option>
+                <option value="terminé">Terminé</option>
+                <option value="annulé">Annulé</option>
+              </select>
+            </div>
           </div>
 
           <div className="flex justify-end space-x-3 pt-4 border-t border-border">

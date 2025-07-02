@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
-import { X, Ticket, User, MapPin } from 'lucide-react';
+import { X, Ticket, User, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface BookingModalProps {
   onClose: () => void;
@@ -11,7 +12,13 @@ interface BookingModalProps {
   travels: any[];
 }
 
-const BookingModal: React.FC<BookingModalProps> = ({ onClose, onSave, passengers, itineraries, travels }) => {
+const BookingModal: React.FC<BookingModalProps> = ({ 
+  onClose, 
+  onSave, 
+  passengers, 
+  itineraries, 
+  travels 
+}) => {
   const [formData, setFormData] = useState({
     passengerId: '',
     travelId: '',
@@ -26,7 +33,10 @@ const BookingModal: React.FC<BookingModalProps> = ({ onClose, onSave, passengers
     const selectedPassenger = passengers.find(p => p.id === formData.passengerId);
     const selectedTravel = travels.find(t => t.id === formData.travelId);
     
-    if (!selectedPassenger || !selectedTravel) return;
+    if (!selectedPassenger || !selectedTravel) {
+      alert('Veuillez sélectionner un passager et un voyage');
+      return;
+    }
 
     const bookingData = {
       id: Date.now().toString(),
@@ -42,7 +52,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ onClose, onSave, passengers
       ticketType: formData.ticketType,
       amount: formData.amount,
       status: 'confirmé',
-      bookingDate: new Date().toISOString().split('T')[0],
+      bookingDate: new Date().toISOString().split('T')[0]
     };
 
     onSave(bookingData);
@@ -50,15 +60,23 @@ const BookingModal: React.FC<BookingModalProps> = ({ onClose, onSave, passengers
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [name]: name === 'amount' ? parseInt(value) || 0 : value
     }));
+  };
+
+  const generateSeatNumber = () => {
+    const letters = 'ABCDEFGH';
+    const letter = letters[Math.floor(Math.random() * letters.length)];
+    const number = Math.floor(Math.random() * 30) + 1;
+    setFormData(prev => ({ ...prev, seatNumber: `${letter}${number}` }));
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-card rounded-lg w-full max-w-lg">
+      <div className="bg-card rounded-lg w-full max-w-md">
         <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-primary/10 rounded-lg">
@@ -76,16 +94,16 @@ const BookingModal: React.FC<BookingModalProps> = ({ onClose, onSave, passengers
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Voyageur *
+              Passager *
             </label>
             <select
               name="passengerId"
               value={formData.passengerId}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
               required
+              className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
             >
-              <option value="">Sélectionner un voyageur</option>
+              <option value="">Sélectionner un passager</option>
               {passengers.map(passenger => (
                 <option key={passenger.id} value={passenger.id}>
                   {passenger.firstName} {passenger.lastName}
@@ -102,59 +120,65 @@ const BookingModal: React.FC<BookingModalProps> = ({ onClose, onSave, passengers
               name="travelId"
               value={formData.travelId}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
               required
+              className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
             >
               <option value="">Sélectionner un voyage</option>
-              {travels.map(travel => (
+              {travels.filter(t => t.status === 'programmé').map(travel => (
                 <option key={travel.id} value={travel.id}>
-                  {travel.departure} → {travel.destination} - {travel.departureDate}
+                  {travel.departure} → {travel.destination} - {travel.departureDate} {travel.departureTime}
                 </option>
               ))}
             </select>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Numéro de siège
-              </label>
-              <input
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Numéro de siège *
+            </label>
+            <div className="flex gap-2">
+              <Input
                 name="seatNumber"
                 value={formData.seatNumber}
                 onChange={handleChange}
                 placeholder="Ex: A12"
-                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                required
+                className="flex-1"
               />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Type de billet
-              </label>
-              <select
-                name="ticketType"
-                value={formData.ticketType}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-              >
-                <option value="simple">Billet simple</option>
-                <option value="groupe">Billet groupe</option>
-              </select>
+              <Button type="button" variant="outline" onClick={generateSeatNumber}>
+                Auto
+              </Button>
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Montant (FCFA)
+              Type de ticket
             </label>
-            <input
-              name="amount"
+            <select
+              name="ticketType"
+              value={formData.ticketType}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+            >
+              <option value="simple">Simple</option>
+              <option value="aller-retour">Aller-retour</option>
+              <option value="groupe">Groupe</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Montant (FCFA) *
+            </label>
+            <Input
               type="number"
+              name="amount"
               value={formData.amount}
               onChange={handleChange}
-              min="0"
-              className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+              min="1000"
+              step="1000"
+              required
             />
           </div>
 
@@ -163,7 +187,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ onClose, onSave, passengers
               Annuler
             </Button>
             <Button type="submit" className="fleet-button-primary">
-              Confirmer la réservation
+              Créer la réservation
             </Button>
           </div>
         </form>

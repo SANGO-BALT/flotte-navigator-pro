@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Search, Plus, Bus, Users, MapPin, Ticket, Calendar, Edit, Trash, Eye } from 'lucide-react';
+import { Search, Plus, Bus, Users, MapPin, Ticket, Calendar, Edit, Trash, Eye, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import TravelModal from './TravelModal';
@@ -25,9 +24,9 @@ const TravelPage: React.FC = () => {
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   
   const [selectedItem, setSelectedItem] = useState(null);
-  const userRole = 'manager'; // À récupérer du contexte
+  const userRole = 'manager';
 
-  // États pour chaque entité
+  // États avec données de test réalistes pour la présentation
   const [travels, setTravels] = useState([
     {
       id: '1',
@@ -44,6 +43,38 @@ const TravelPage: React.FC = () => {
       status: 'programmé',
       price: 15000,
       distance: 300,
+    },
+    {
+      id: '2',
+      vehiclePlate: 'EF-456-GH',
+      vehicleBrand: 'Renault Trafic',
+      departure: 'Libreville',
+      destination: 'Franceville',
+      departureDate: '2024-07-16',
+      departureTime: '06:00',
+      arrivalTime: '16:30',
+      passengers: 18,
+      capacity: 20,
+      driverName: 'Marie Nguema',
+      status: 'en-cours',
+      price: 25000,
+      distance: 650,
+    },
+    {
+      id: '3',
+      vehiclePlate: 'IJ-789-KL',
+      vehicleBrand: 'Toyota Hiace',
+      departure: 'Port-Gentil',
+      destination: 'Lambaréné',
+      departureDate: '2024-07-14',
+      departureTime: '14:00',
+      arrivalTime: '16:30',
+      passengers: 15,
+      capacity: 18,
+      driverName: 'Paul Obame',
+      status: 'terminé',
+      price: 8000,
+      distance: 120,
     }
   ]);
 
@@ -53,7 +84,28 @@ const TravelPage: React.FC = () => {
       firstName: 'Marie',
       lastName: 'Mbourou',
       gender: 'F',
-      phone: '+241 XX XX XX XX'
+      phone: '+241 01 23 45 67'
+    },
+    {
+      id: '2',
+      firstName: 'Jean',
+      lastName: 'Obame',
+      gender: 'M',
+      phone: '+241 07 89 12 34'
+    },
+    {
+      id: '3',
+      firstName: 'Claire',
+      lastName: 'Mintsa',
+      gender: 'F',
+      phone: '+241 05 67 89 01'
+    },
+    {
+      id: '4',
+      firstName: 'Pierre',
+      lastName: 'Nkoghe',
+      gender: 'M',
+      phone: '+241 02 34 56 78'
     }
   ]);
 
@@ -68,13 +120,46 @@ const TravelPage: React.FC = () => {
       priceSimple: 15000,
       priceGroup: 12000,
       isActive: true
+    },
+    {
+      id: '2',
+      name: 'Libreville - Franceville',
+      departure: 'Libreville',
+      destination: 'Franceville',
+      distance: 650,
+      duration: '10h 30min',
+      priceSimple: 25000,
+      priceGroup: 20000,
+      isActive: true
+    },
+    {
+      id: '3',
+      name: 'Port-Gentil - Lambaréné',
+      departure: 'Port-Gentil',
+      destination: 'Lambaréné',
+      distance: 120,
+      duration: '2h 30min',
+      priceSimple: 8000,
+      priceGroup: 6500,
+      isActive: true
+    },
+    {
+      id: '4',
+      name: 'Oyem - Libreville',
+      departure: 'Oyem',
+      destination: 'Libreville',
+      distance: 320,
+      duration: '5h 20min',
+      priceSimple: 18000,
+      priceGroup: 15000,
+      isActive: false
     }
   ]);
 
   const [bookings, setBookings] = useState([
     {
       id: '1',
-      ticketNumber: 'TK-001',
+      ticketNumber: 'TK-001234',
       passengerId: '1',
       passengerName: 'Marie Mbourou',
       travelId: '1',
@@ -87,6 +172,38 @@ const TravelPage: React.FC = () => {
       amount: 15000,
       status: 'confirmé',
       bookingDate: '2024-07-10'
+    },
+    {
+      id: '2',
+      ticketNumber: 'TK-001235',
+      passengerId: '2',
+      passengerName: 'Jean Obame',
+      travelId: '2',
+      itinerary: 'Libreville → Franceville',
+      departureDate: '2024-07-16',
+      departureTime: '06:00',
+      vehiclePlate: 'EF-456-GH',
+      seatNumber: 'B05',
+      ticketType: 'aller-retour',
+      amount: 45000,
+      status: 'confirmé',
+      bookingDate: '2024-07-12'
+    },
+    {
+      id: '3',
+      ticketNumber: 'TK-001236',
+      passengerId: '3',
+      passengerName: 'Claire Mintsa',
+      travelId: '3',
+      itinerary: 'Port-Gentil → Lambaréné',
+      departureDate: '2024-07-14',
+      departureTime: '14:00',
+      vehiclePlate: 'IJ-789-KL',
+      seatNumber: 'C08',
+      ticketType: 'simple',
+      amount: 8000,
+      status: 'terminé',
+      bookingDate: '2024-07-13'
     }
   ]);
 
@@ -227,6 +344,40 @@ const TravelPage: React.FC = () => {
 
   return (
     <div className="p-6">
+      {/* Header du module */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-foreground mb-2">
+          🚌 Module de Gestion des Voyages
+        </h1>
+        <p className="text-muted-foreground">
+          Gérez les voyages, passagers, itinéraires et réservations de votre flotte
+        </p>
+      </div>
+
+      {/* Statistiques rapides */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="fleet-card text-center">
+          <Bus className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+          <p className="text-2xl font-bold text-foreground">{travels.length}</p>
+          <p className="text-sm text-muted-foreground">Voyages</p>
+        </div>
+        <div className="fleet-card text-center">
+          <Users className="w-8 h-8 text-green-500 mx-auto mb-2" />
+          <p className="text-2xl font-bold text-foreground">{passengers.length}</p>
+          <p className="text-sm text-muted-foreground">Voyageurs</p>
+        </div>
+        <div className="fleet-card text-center">
+          <MapPin className="w-8 h-8 text-purple-500 mx-auto mb-2" />
+          <p className="text-2xl font-bold text-foreground">{itineraries.filter(i => i.isActive).length}</p>
+          <p className="text-sm text-muted-foreground">Itinéraires actifs</p>
+        </div>
+        <div className="fleet-card text-center">
+          <Ticket className="w-8 h-8 text-orange-500 mx-auto mb-2" />
+          <p className="text-2xl font-bold text-foreground">{bookings.filter(b => b.status === 'confirmé').length}</p>
+          <p className="text-sm text-muted-foreground">Réservations confirmées</p>
+        </div>
+      </div>
+
       {/* Tabs */}
       <div className="flex space-x-1 mb-6 bg-muted p-1 rounded-lg">
         {tabs.map(tab => (
@@ -330,7 +481,7 @@ const TravelPage: React.FC = () => {
                     <td className="py-3 px-4">
                       <div>
                         <p className="text-sm text-foreground">{travel.departure} → {travel.destination}</p>
-                        <p className="text-xs text-muted-foreground">{travel.distance} km</p>
+                        <p className="text-xs text-muted-foreground">{travel.distance} km - {travel.price} FCFA</p>
                       </div>
                     </td>
                     <td className="py-3 px-4">
@@ -363,6 +514,14 @@ const TravelPage: React.FC = () => {
                             <Edit className="w-4 h-4" />
                           </Button>
                         )}
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleGenerateInvoice(travel)}
+                          title="Facture"
+                        >
+                          <FileText className="w-4 h-4" />
+                        </Button>
                         {hasPermission(userRole, 'travel', 'delete') && (
                           <Button 
                             variant="ghost" 

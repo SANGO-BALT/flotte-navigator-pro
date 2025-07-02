@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MapPin, Navigation, Layers, Maximize, RotateCcw, ZoomIn, ZoomOut, Locate } from 'lucide-react';
+import { MapPin, Navigation, Layers, Maximize, RotateCcw, ZoomIn, ZoomOut, Locate, Route, Car } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import GPSHistoryModal from './GPSHistoryModal';
 
@@ -8,6 +8,8 @@ interface Vehicle {
   plate: string;
   coordinates: { lat: number; lng: number };
   status: string;
+  speed?: number;
+  heading?: number;
 }
 
 interface OpenStreetMapComponentProps {
@@ -23,6 +25,8 @@ const OpenStreetMapComponent: React.FC<OpenStreetMapComponentProps> = ({ vehicle
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [selectedVehicleForHistory, setSelectedVehicleForHistory] = useState('');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [showTraffic, setShowTraffic] = useState(false);
+  const [realTimeTracking, setRealTimeTracking] = useState(false);
 
   // Coordonnées du Gabon (Libreville comme centre)
   const gabonCenter = { lat: 0.4162, lng: 9.4673 };
@@ -52,62 +56,150 @@ const OpenStreetMapComponent: React.FC<OpenStreetMapComponentProps> = ({ vehicle
         const map = L.map(mapRef.current).setView([gabonCenter.lat, gabonCenter.lng], 7);
         leafletMapRef.current = map;
 
-        // Couches de cartes
+        // Couches de cartes améliorées
         const layers = {
           standard: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
           }),
           satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: '© Esri'
+            attribution: '© Esri',
+            maxZoom: 18
           }),
           terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenTopoMap contributors'
+            attribution: '© OpenTopoMap contributors',
+            maxZoom: 17
+          }),
+          dark: L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+            attribution: '© Stadia Maps',
+            maxZoom: 20
           })
         };
 
         // Ajouter la couche par défaut
         layers[mapLayer].addTo(map);
 
-        // Ajouter les véhicules
-        vehicles.forEach((vehicle) => {
+        // Groupe de marqueurs pour les véhicules
+        const vehicleGroup = L.layerGroup().addTo(map);
+
+        // Fonction pour créer une icône de véhicule personnalisée
+        const createVehicleIcon = (vehicle: Vehicle) => {
           const color = vehicle.status === 'en-mouvement' ? '#4caf50' : 
                        vehicle.status === 'arrêté' ? '#ff9800' : '#f44336';
           
-          const marker = L.circleMarker([vehicle.coordinates.lat, vehicle.coordinates.lng], {
-            radius: 8,
-            fillColor: color,
-            color: '#fff',
-            weight: 2,
-            opacity: 1,
-            fillOpacity: 0.8
-          }).addTo(map);
+          const rotation = vehicle.heading || 0;
+          
+          return L.divIcon({
+            html: `
+              <div style="
+                width: 30px; 
+                height: 30px; 
+                background: ${color}; 
+                border: 3px solid white; 
+                border-radius: 50%; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                transform: rotate(${rotation}deg);
+              ">
+                <div style="
+                  width: 0; 
+                  height: 0; 
+                  border-left: 5px solid transparent; 
+                  border-right: 5px solid transparent; 
+                  border-bottom: 8px solid white;
+                "></div>
+              </div>
+            `,
+            className: 'custom-vehicle-icon',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+          });
+        };
 
-          marker.bindPopup(`
-            <div>
-              <strong>${vehicle.plate}</strong><br>
-              Statut: ${vehicle.status}<br>
-              <button onclick="window.showVehicleHistory('${vehicle.id}')" class="mt-2 px-2 py-1 bg-blue-500 text-white rounded text-xs">
-                Voir historique
-              </button>
+        // Ajouter les véhicules avec icônes personnalisées
+        vehicles.forEach((vehicle) => {
+          const icon = createVehicleIcon(vehicle);
+          
+          const marker = L.marker([vehicle.coordinates.lat, vehicle.coordinates.lng], {
+            icon: icon
+          }).addTo(vehicleGroup);
+
+          // Popup avec informations détaillées
+          const popupContent = `
+            <div style="min-width: 200px;">
+              <h3 style="margin: 0 0 10px 0; color: #333;">${vehicle.plate}</h3>
+              <p style="margin: 2px 0;"><strong>Statut:</strong> ${vehicle.status}</p>
+              ${vehicle.speed ? `<p style="margin: 2px 0;"><strong>Vitesse:</strong> ${vehicle.speed} km/h</p>` : ''}
+              <p style="margin: 2px 0;"><strong>Position:</strong> ${vehicle.coordinates.lat.toFixed(4)}, ${vehicle.coordinates.lng.toFixed(4)}</p>
+              <div style="margin-top: 10px;">
+                <button onclick="window.showVehicleHistory('${vehicle.id}')" 
+                        style="background: #2196f3; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">
+                  Voir historique
+                </button>
+              </div>
             </div>
-          `);
+          `;
+
+          marker.bindPopup(popupContent);
+
+          // Animation pour les véhicules en mouvement
+          if (vehicle.status === 'en-mouvement') {
+            let pulse = 0;
+            const pulseAnimation = setInterval(() => {
+              pulse += 0.1;
+              const scale = 1 + Math.sin(pulse) * 0.1;
+              marker.getElement()?.style.setProperty('transform', `scale(${scale})`);
+            }, 100);
+            
+            // Nettoyer l'animation après 10 secondes
+            setTimeout(() => clearInterval(pulseAnimation), 10000);
+          }
 
           if (selectedVehicle === vehicle.id) {
             marker.openPopup();
-            map.setView([vehicle.coordinates.lat, vehicle.coordinates.lng], 10);
+            map.setView([vehicle.coordinates.lat, vehicle.coordinates.lng], 12);
           }
         });
 
-        // Position utilisateur
+        // Position utilisateur avec précision
         if (userLocation) {
-          L.circleMarker([userLocation.lat, userLocation.lng], {
-            radius: 10,
-            fillColor: '#2196f3',
-            color: '#fff',
-            weight: 3,
-            opacity: 1,
-            fillOpacity: 0.8
-          }).addTo(map).bindPopup('Votre position');
+          const userIcon = L.divIcon({
+            html: `
+              <div style="
+                width: 20px; 
+                height: 20px; 
+                background: #2196f3; 
+                border: 4px solid white; 
+                border-radius: 50%; 
+                box-shadow: 0 0 0 4px rgba(33, 150, 243, 0.3);
+                animation: pulse 2s infinite;
+              "></div>
+            `,
+            className: 'user-location-icon',
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+          });
+
+          L.marker([userLocation.lat, userLocation.lng], { icon: userIcon })
+            .addTo(map)
+            .bindPopup('Votre position');
+        }
+
+        // Traçage d'itinéraires (simulation)
+        const routeCoordinates = [
+          [0.4162, 9.4673], // Libreville
+          [-0.7193, 8.7815], // Port-Gentil
+        ];
+
+        if (showTraffic) {
+          L.polyline(routeCoordinates, {
+            color: '#ff6b6b',
+            weight: 5,
+            opacity: 0.7,
+            dashArray: '10, 10'
+          }).addTo(map).bindPopup('Route principale Libreville - Port-Gentil');
         }
 
         // Fonction globale pour l'historique
@@ -116,15 +208,25 @@ const OpenStreetMapComponent: React.FC<OpenStreetMapComponentProps> = ({ vehicle
           setShowHistoryModal(true);
         };
 
-        // Changer de couche
-        const handleLayerChange = () => {
-          map.eachLayer((layer) => {
-            if (layer instanceof L.TileLayer) {
-              map.removeLayer(layer);
-            }
-          });
-          layers[mapLayer].addTo(map);
-        };
+        // Gestion des couches
+        const layerControl = L.control.layers({
+          'Standard': layers.standard,
+          'Satellite': layers.satellite,
+          'Terrain': layers.terrain,
+          'Sombre': layers.dark
+        }, {
+          'Véhicules': vehicleGroup,
+        }).addTo(map);
+
+        // Mise à jour automatique en temps réel
+        if (realTimeTracking) {
+          const updateInterval = setInterval(() => {
+            // Simulation de mise à jour des positions
+            console.log('Mise à jour temps réel des positions GPS...');
+          }, 5000);
+
+          return () => clearInterval(updateInterval);
+        }
 
         return () => {
           if (leafletMapRef.current) {
@@ -135,20 +237,19 @@ const OpenStreetMapComponent: React.FC<OpenStreetMapComponentProps> = ({ vehicle
       } catch (error) {
         console.error('Erreur lors du chargement de la carte:', error);
         // Fallback vers la carte personnalisée si Leaflet échoue
-        createFallbackMap();
+        createAdvancedFallbackMap();
       }
     };
 
     initializeMap();
-  }, [vehicles, selectedVehicle, mapLayer, userLocation]);
+  }, [vehicles, selectedVehicle, mapLayer, userLocation, showTraffic, realTimeTracking]);
 
-  const createFallbackMap = () => {
+  const createAdvancedFallbackMap = () => {
     if (!mapRef.current) return;
 
     const mapContainer = mapRef.current;
     mapContainer.innerHTML = '';
     
-    // Coordonnées exactes du Gabon
     const gabonBounds = {
       north: 2.318109,
       south: -3.978809,
@@ -161,16 +262,12 @@ const OpenStreetMapComponent: React.FC<OpenStreetMapComponentProps> = ({ vehicle
       lng: 11.6
     };
 
-    // Villes principales du Gabon
     const gabonCities = [
       { name: 'Libreville', lat: 0.4162, lng: 9.4673, isCapital: true, population: '703,904' },
       { name: 'Port-Gentil', lat: -0.7193, lng: 8.7815, isCapital: false, population: '136,462' },
       { name: 'Franceville', lat: -1.6332, lng: 13.5833, isCapital: false, population: '110,568' },
       { name: 'Oyem', lat: 1.5993, lng: 11.5793, isCapital: false, population: '60,685' },
       { name: 'Moanda', lat: -1.5336, lng: 13.1987, isCapital: false, population: '39,298' },
-      { name: 'Mouila', lat: -1.8642, lng: 11.0564, isCapital: false, population: '22,469' },
-      { name: 'Lambaréné', lat: -0.6998, lng: 10.2443, isCapital: false, population: '20,714' },
-      { name: 'Tchibanga', lat: -2.8500, lng: 11.0167, isCapital: false, population: '19,365' },
     ];
 
     const mapLayers = {
@@ -193,7 +290,6 @@ const OpenStreetMapComponent: React.FC<OpenStreetMapComponentProps> = ({ vehicle
     
     const currentLayer = mapLayers[mapLayer];
       
-    // Container principal
     const mapDiv = document.createElement('div');
     mapDiv.style.cssText = `
       width: 100%;
@@ -203,48 +299,9 @@ const OpenStreetMapComponent: React.FC<OpenStreetMapComponentProps> = ({ vehicle
       overflow: hidden;
       border-radius: 8px;
       border: 2px solid ${currentLayer.border};
-      transform: scale(1);
-      transform-origin: center;
-      transition: transform 0.3s ease;
     `;
 
-    // Océan Atlantique
-    if (mapLayer === 'standard') {
-      const oceanDiv = document.createElement('div');
-      oceanDiv.style.cssText = `
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 15%;
-        height: 100%;
-        background: linear-gradient(90deg, #006064, #00838f);
-        opacity: 0.7;
-      `;
-      mapDiv.appendChild(oceanDiv);
-    }
-
-    // Forme du Gabon
-    const gabonShape = document.createElement('div');
-    const shapeStyle = mapLayer === 'satellite' 
-      ? 'background: linear-gradient(45deg, #4a4a4a, #666666, #333333);'
-      : mapLayer === 'terrain'
-      ? 'background: linear-gradient(45deg, #2e7d32, #388e3c, #43a047);'
-      : 'background: linear-gradient(45deg, #2e7d32, #388e3c, #43a047);';
-      
-    gabonShape.style.cssText = `
-      position: absolute;
-      top: 15%;
-      left: 15%;
-      width: 70%;
-      height: 70%;
-      ${shapeStyle}
-      border: 3px solid ${currentLayer.border};
-      border-radius: 15% 85% 25% 75% / 85% 15% 85% 15%;
-      box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
-    `;
-    mapDiv.appendChild(gabonShape);
-
-    // Villes
+    // Ajouter les éléments de la carte (villes, véhicules, etc.)
     gabonCities.forEach(city => {
       const x = ((city.lng - gabonBounds.west) / (gabonBounds.east - gabonBounds.west)) * 100;
       const y = ((gabonBounds.north - city.lat) / (gabonBounds.north - gabonBounds.south)) * 100;
@@ -266,29 +323,9 @@ const OpenStreetMapComponent: React.FC<OpenStreetMapComponentProps> = ({ vehicle
       `;
       cityMarker.title = `${city.name} - ${city.population} habitants`;
       mapDiv.appendChild(cityMarker);
-
-      const cityLabel = document.createElement('div');
-      cityLabel.style.cssText = `
-        position: absolute;
-        left: ${x}%;
-        top: calc(${y}% + 15px);
-        font-size: ${city.isCapital ? '14px' : '11px'};
-        font-weight: ${city.isCapital ? 'bold' : '600'};
-        color: ${mapLayer === 'satellite' ? '#ffffff' : '#263238'};
-        background: rgba(${mapLayer === 'satellite' ? '0,0,0' : '255,255,255'},0.9);
-        padding: 3px 6px;
-        border-radius: 4px;
-        white-space: nowrap;
-        transform: translateX(-50%);
-        pointer-events: none;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        border: 1px solid #e0e0e0;
-      `;
-      cityLabel.textContent = city.name;
-      mapDiv.appendChild(cityLabel);
     });
 
-    // Véhicules
+    // Ajouter véhicules avec animations
     vehicles.forEach((vehicle) => {
       if (vehicle.coordinates.lat < gabonBounds.south || 
           vehicle.coordinates.lat > gabonBounds.north ||
@@ -305,17 +342,17 @@ const OpenStreetMapComponent: React.FC<OpenStreetMapComponentProps> = ({ vehicle
         position: absolute;
         left: ${x}%;
         top: ${y}%;
-        width: 24px;
-        height: 24px;
+        width: 28px;
+        height: 28px;
         background: ${vehicle.status === 'en-mouvement' ? '#4caf50' : vehicle.status === 'arrêté' ? '#ff9800' : '#f44336'};
         border: 3px solid white;
         border-radius: 50%;
         cursor: pointer;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+        box-shadow: 0 3px 12px rgba(0,0,0,0.4);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 10px;
+        font-size: 8px;
         color: white;
         font-weight: bold;
         z-index: 15;
@@ -323,17 +360,20 @@ const OpenStreetMapComponent: React.FC<OpenStreetMapComponentProps> = ({ vehicle
         transition: all 0.3s ease;
       `;
         
-      marker.textContent = vehicle.plate.slice(-2);
-      marker.title = `${vehicle.plate} - ${vehicle.status}`;
+      // Ajouter icône de véhicule
+      const vehicleIcon = document.createElement('div');
+      vehicleIcon.innerHTML = '🚗';
+      vehicleIcon.style.fontSize = '12px';
+      marker.appendChild(vehicleIcon);
         
       if (vehicle.status === 'en-mouvement') {
-        marker.style.animation = 'pulse 2s infinite';
+        marker.style.animation = 'pulse 2s infinite, bounce 1s ease-in-out infinite alternate';
       }
         
       if (selectedVehicle === vehicle.id) {
-        marker.style.transform = 'translate(-50%, -50%) scale(1.5)';
-        marker.style.boxShadow = '0 0 0 6px rgba(33, 150, 243, 0.4)';
-        marker.style.zIndex = '20';
+        marker.style.transform = 'translate(-50%, -50%) scale(1.3)';
+        marker.style.boxShadow = '0 0 0 8px rgba(33, 150, 243, 0.4)';
+        marker.style.zIndex = '25';
       }
 
       marker.addEventListener('click', () => {
@@ -343,29 +383,6 @@ const OpenStreetMapComponent: React.FC<OpenStreetMapComponentProps> = ({ vehicle
 
       mapDiv.appendChild(marker);
     });
-
-    // Position utilisateur
-    if (userLocation) {
-      const x = ((userLocation.lng - gabonBounds.west) / (gabonBounds.east - gabonBounds.west)) * 100;
-      const y = ((gabonBounds.north - userLocation.lat) / (gabonBounds.north - gabonBounds.south)) * 100;
-
-      const userMarker = document.createElement('div');
-      userMarker.style.cssText = `
-        position: absolute;
-        left: ${x}%;
-        top: ${y}%;
-        width: 20px;
-        height: 20px;
-        background: #2196f3;
-        border: 4px solid white;
-        border-radius: 50%;
-        box-shadow: 0 0 0 4px rgba(33, 150, 243, 0.3);
-        z-index: 25;
-        transform: translate(-50%, -50%);
-        animation: pulse 2s infinite;
-      `;
-      mapDiv.appendChild(userMarker);
-    }
 
     mapContainer.appendChild(mapDiv);
   };
@@ -403,25 +420,6 @@ const OpenStreetMapComponent: React.FC<OpenStreetMapComponentProps> = ({ vehicle
     }
   };
 
-  const handleZoomIn = () => {
-    if (leafletMapRef.current) {
-      leafletMapRef.current.zoomIn();
-    }
-  };
-
-  const handleZoomOut = () => {
-    if (leafletMapRef.current) {
-      leafletMapRef.current.zoomOut();
-    }
-  };
-
-  const handleResetView = () => {
-    if (leafletMapRef.current) {
-      leafletMapRef.current.setView([gabonCenter.lat, gabonCenter.lng], 7);
-      setUserLocation(null);
-    }
-  };
-
   return (
     <div className={`relative ${isFullscreen ? 'fixed inset-0 z-50 bg-black' : ''}`}>
       <div 
@@ -430,7 +428,7 @@ const OpenStreetMapComponent: React.FC<OpenStreetMapComponentProps> = ({ vehicle
         style={{ minHeight: isFullscreen ? '100vh' : '400px' }}
       />
       
-      {/* Contrôles de la carte */}
+      {/* Contrôles avancés de la carte */}
       <div className="absolute top-4 right-4 flex flex-col gap-2 z-30">
         {/* Sélecteur de couches */}
         <div className="bg-white/95 backdrop-blur-sm rounded-lg p-2 shadow-md">
@@ -442,7 +440,30 @@ const OpenStreetMapComponent: React.FC<OpenStreetMapComponentProps> = ({ vehicle
             <option value="standard">Standard</option>
             <option value="satellite">Satellite</option>
             <option value="terrain">Terrain</option>
+            <option value="dark">Sombre</option>
           </select>
+        </div>
+        
+        {/* Contrôles GPS avancés */}
+        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-md overflow-hidden">
+          <Button
+            variant={realTimeTracking ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setRealTimeTracking(!realTimeTracking)}
+            className="w-8 h-8 p-0 rounded-none"
+            title="Suivi temps réel"
+          >
+            <Navigation className={`w-4 h-4 ${realTimeTracking ? 'animate-pulse' : ''}`} />
+          </Button>
+          <Button
+            variant={showTraffic ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setShowTraffic(!showTraffic)}
+            className="w-8 h-8 p-0 rounded-none border-t"
+            title="Afficher routes"
+          >
+            <Route className="w-4 h-4" />
+          </Button>
         </div>
         
         {/* Contrôles de zoom */}
@@ -450,7 +471,7 @@ const OpenStreetMapComponent: React.FC<OpenStreetMapComponentProps> = ({ vehicle
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleZoomIn}
+            onClick={() => leafletMapRef.current?.zoomIn()}
             className="w-8 h-8 p-0 rounded-none"
             title="Zoom avant"
           >
@@ -459,7 +480,7 @@ const OpenStreetMapComponent: React.FC<OpenStreetMapComponentProps> = ({ vehicle
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleZoomOut}
+            onClick={() => leafletMapRef.current?.zoomOut()}
             className="w-8 h-8 p-0 rounded-none border-t"
             title="Zoom arrière"
           >
@@ -481,9 +502,9 @@ const OpenStreetMapComponent: React.FC<OpenStreetMapComponentProps> = ({ vehicle
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleResetView}
+            onClick={() => leafletMapRef.current?.setView([gabonCenter.lat, gabonCenter.lng], 7)}
             className="w-8 h-8 p-0 rounded-none border-t"
-            title="Réinitialiser la vue"
+            title="Centrer sur Gabon"
           >
             <RotateCcw className="w-4 h-4" />
           </Button>
@@ -499,26 +520,35 @@ const OpenStreetMapComponent: React.FC<OpenStreetMapComponentProps> = ({ vehicle
         </div>
       </div>
 
-      {/* Légende */}
+      {/* Légende améliorée */}
       <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg p-3 shadow-md text-xs z-30">
-        <div className="font-bold mb-2 text-blue-800">🇬🇦 Gabon - Suivi GPS</div>
+        <div className="font-bold mb-2 text-blue-800 flex items-center gap-2">
+          🇬🇦 Gabon - Traceur GPS Avancé
+          {realTimeTracking && <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>}
+        </div>
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-            <span>En mouvement</span>
+            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+            <span>En mouvement ({vehicles.filter(v => v.status === 'en-mouvement').length})</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-            <span>Arrêté</span>
+            <span>Arrêté ({vehicles.filter(v => v.status === 'arrêté').length})</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-            <span>Hors ligne</span>
+            <span>Hors ligne ({vehicles.filter(v => v.status === 'hors-ligne').length})</span>
           </div>
           {userLocation && (
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+              <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
               <span>Ma position</span>
+            </div>
+          )}
+          {showTraffic && (
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-1 bg-red-500"></div>
+              <span>Routes principales</span>
             </div>
           )}
         </div>
