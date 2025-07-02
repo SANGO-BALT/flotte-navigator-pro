@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { X, Ticket, Download, Print } from 'lucide-react';
+import { X, Ticket, Download, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface TicketModalProps {
@@ -98,7 +98,7 @@ const TicketModal: React.FC<TicketModalProps> = ({ booking, onClose }) => {
           
           <div className="flex justify-center space-x-3 mt-6">
             <Button onClick={handlePrint} variant="outline">
-              <Print className="w-4 h-4 mr-2" />
+              <Printer className="w-4 h-4 mr-2" />
               Imprimer
             </Button>
             <Button onClick={handleDownload} className="fleet-button-primary">
