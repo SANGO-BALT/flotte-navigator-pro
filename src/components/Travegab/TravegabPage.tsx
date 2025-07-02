@@ -11,6 +11,8 @@ const TravegabPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'voyage' | 'passenger' | 'reservation' | 'itinerary'>('voyage');
+  const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create');
+  const [selectedItem, setSelectedItem] = useState<any>(null);
   const { toast } = useToast();
 
   // Données de test pour présentation
@@ -110,7 +112,8 @@ const TravegabPage: React.FC = () => {
     'en-cours': 'bg-orange-100 text-orange-800',
     'confirmé': 'bg-green-100 text-green-800',
     'terminé': 'bg-gray-100 text-gray-800',
-    'payé': 'bg-emerald-100 text-emerald-800'
+    'payé': 'bg-emerald-100 text-emerald-800',
+    'annulé': 'bg-red-100 text-red-800'
   };
 
   const tabs = [
@@ -120,33 +123,105 @@ const TravegabPage: React.FC = () => {
     { id: 'itineraires', label: 'Itinéraires', icon: MapPin }
   ];
 
-  const openModal = (type: 'voyage' | 'passenger' | 'reservation' | 'itinerary') => {
+  const openModal = (type: 'voyage' | 'passenger' | 'reservation' | 'itinerary', mode: 'create' | 'edit' | 'view' = 'create', item?: any) => {
     setModalType(type);
+    setModalMode(mode);
+    setSelectedItem(item);
     setModalOpen(true);
   };
 
   const handleSave = (data: any) => {
-    // Logique de sauvegarde selon le type
-    const newId = Date.now().toString();
+    const newId = modalMode === 'create' ? Date.now().toString() : selectedItem?.id;
     
     switch (modalType) {
       case 'voyage':
-        setVoyages([...voyages, { ...data, id: newId, passagers: 0 }]);
+        if (modalMode === 'create') {
+          setVoyages([...voyages, { ...data, id: newId, passagers: 0 }]);
+        } else {
+          setVoyages(voyages.map(v => v.id === newId ? { ...v, ...data } : v));
+        }
         break;
       case 'passenger':
-        setPassagers([...passagers, { ...data, id: newId }]);
+        if (modalMode === 'create') {
+          const newPassenger = { ...data, id: newId };
+          setPassagers([...passagers, newPassenger]);
+          
+          // Si un voyage est assigné, créer automatiquement une réservation
+          if (data.voyageAssigne) {
+            const voyage = voyages.find(v => v.id === data.voyageAssigne);
+            if (voyage) {
+              const newReservation = {
+                id: `${newId}-res`,
+                numeroTicket: `TK-${newId}`,
+                passager: `${data.prenom} ${data.nom}`,
+                voyage: `${voyage.depart} → ${voyage.destination}`,
+                siege: `A${Math.floor(Math.random() * 30) + 1}`,
+                montant: voyage.prix,
+                statut: 'confirmé',
+                dateReservation: new Date().toISOString().split('T')[0]
+              };
+              setReservations([...reservations, newReservation]);
+            }
+          }
+        } else {
+          setPassagers(passagers.map(p => p.id === newId ? { ...p, ...data } : p));
+        }
         break;
       case 'reservation':
-        setReservations([...reservations, { ...data, id: newId, numeroTicket: `TK-${newId}`, dateReservation: new Date().toISOString().split('T')[0] }]);
+        if (modalMode === 'create') {
+          setReservations([...reservations, { 
+            ...data, 
+            id: newId, 
+            numeroTicket: `TK-${newId}`, 
+            dateReservation: new Date().toISOString().split('T')[0] 
+          }]);
+        } else {
+          setReservations(reservations.map(r => r.id === newId ? { ...r, ...data } : r));
+        }
         break;
       case 'itinerary':
-        setItineraires([...itineraires, { ...data, id: newId, actif: true }]);
+        if (modalMode === 'create') {
+          setItineraires([...itineraires, { ...data, id: newId, actif: true }]);
+        } else {
+          setItineraires(itineraires.map(i => i.id === newId ? { ...i, ...data } : i));
+        }
         break;
     }
 
+    const action = modalMode === 'create' ? 'ajouté' : 'modifié';
+    const itemName = modalType === 'voyage' ? 'Voyage' : 
+                    modalType === 'passenger' ? 'Passager' : 
+                    modalType === 'reservation' ? 'Réservation' : 'Itinéraire';
+
     toast({
       title: "Succès",
-      description: `${modalType === 'voyage' ? 'Voyage' : modalType === 'passenger' ? 'Passager' : modalType === 'reservation' ? 'Réservation' : 'Itinéraire'} ajouté avec succès`,
+      description: `${itemName} ${action} avec succès`,
+    });
+  };
+
+  const handleDelete = (id: string) => {
+    switch (modalType) {
+      case 'voyage':
+        setVoyages(voyages.filter(v => v.id !== id));
+        break;
+      case 'passenger':
+        setPassagers(passagers.filter(p => p.id !== id));
+        break;
+      case 'reservation':
+        setReservations(reservations.filter(r => r.id !== id));
+        break;
+      case 'itinerary':
+        setItineraires(itineraires.filter(i => i.id !== id));
+        break;
+    }
+
+    const itemName = modalType === 'voyage' ? 'Voyage' : 
+                    modalType === 'passenger' ? 'Passager' : 
+                    modalType === 'reservation' ? 'Réservation' : 'Itinéraire';
+
+    toast({
+      title: "Succès",
+      description: `${itemName} supprimé avec succès`,
     });
   };
 
@@ -335,7 +410,7 @@ const TravegabPage: React.FC = () => {
                       </td>
                       <td className="py-4 px-6">
                         <p className="text-foreground">{item.depart} → {item.destination}</p>
-                        <p className="text-sm text-muted-foreground">{item.prix.toLocaleString()} FCFA</p>
+                        <p className="text-sm text-muted-foreground">{item.prix?.toLocaleString()} FCFA</p>
                       </td>
                       <td className="py-4 px-6">
                         <p className="text-foreground">{new Date(item.date).toLocaleDateString('fr-FR')}</p>
@@ -351,10 +426,10 @@ const TravegabPage: React.FC = () => {
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex items-center space-x-2">
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => openModal('voyage', 'edit', item)}>
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => openModal('voyage', 'view', item)}>
                             <Eye className="w-4 h-4" />
                           </Button>
                           <Button variant="ghost" size="sm">
@@ -377,9 +452,14 @@ const TravegabPage: React.FC = () => {
                         <p className="text-foreground">{item.email}</p>
                       </td>
                       <td className="py-4 px-6">
-                        <Button variant="ghost" size="sm">
-                          <Edit className="w-4 h-4" />
-                        </Button>
+                        <div className="flex items-center space-x-2">
+                          <Button variant="ghost" size="sm" onClick={() => openModal('passenger', 'edit', item)}>
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => openModal('passenger', 'view', item)}>
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </td>
                     </>
                   )}
@@ -399,7 +479,7 @@ const TravegabPage: React.FC = () => {
                         <p className="text-foreground font-mono">{item.siege}</p>
                       </td>
                       <td className="py-4 px-6">
-                        <p className="text-foreground font-medium">{item.montant.toLocaleString()} FCFA</p>
+                        <p className="text-foreground font-medium">{item.montant?.toLocaleString()} FCFA</p>
                       </td>
                       <td className="py-4 px-6">
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[item.statut] || 'bg-gray-100 text-gray-800'}`}>
@@ -408,11 +488,11 @@ const TravegabPage: React.FC = () => {
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex items-center space-x-2">
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => openModal('reservation', 'view', item)}>
                             <Eye className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="sm">
-                            <FileText className="w-4 h-4" />
+                          <Button variant="ghost" size="sm" onClick={() => openModal('reservation', 'edit', item)}>
+                            <Edit className="w-4 h-4" />
                           </Button>
                         </div>
                       </td>
@@ -434,12 +514,17 @@ const TravegabPage: React.FC = () => {
                         <p className="text-foreground">{item.duree}</p>
                       </td>
                       <td className="py-4 px-6">
-                        <p className="text-foreground font-medium">{item.prix.toLocaleString()} FCFA</p>
+                        <p className="text-foreground font-medium">{item.prix?.toLocaleString()} FCFA</p>
                       </td>
                       <td className="py-4 px-6">
-                        <Button variant="ghost" size="sm">
-                          <Edit className="w-4 h-4" />
-                        </Button>
+                        <div className="flex items-center space-x-2">
+                          <Button variant="ghost" size="sm" onClick={() => openModal('itinerary', 'edit', item)}>
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => openModal('itinerary', 'view', item)}>
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </td>
                     </>
                   )}
@@ -464,7 +549,11 @@ const TravegabPage: React.FC = () => {
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onSave={handleSave}
+        onDelete={handleDelete}
+        initialData={selectedItem}
         type={modalType}
+        mode={modalMode}
+        voyagesData={voyages}
       />
     </div>
   );
