@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Car, Users, MapPin, Calendar, FileText, Settings, Home, Fuel, AlertTriangle, Wrench, UserCheck } from 'lucide-react';
+import { Car, Users, MapPin, Calendar, FileText, Settings, Home, Fuel, AlertTriangle, Wrench, UserCheck, Bus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SidebarProps {
@@ -17,6 +17,7 @@ const navigationItems = [
   { id: 'gps', label: 'GPS & Localisation', icon: MapPin },
   { id: 'fuel', label: 'Carburant', icon: Fuel },
   { id: 'violations', label: 'Contraventions', icon: AlertTriangle },
+  { id: 'travel', label: 'TRAVEGAB', icon: Bus },
   { id: 'documents', label: 'Documents', icon: FileText },
   { id: 'reports', label: 'Rapports', icon: Calendar },
   { id: 'user-management', label: 'Gestion Utilisateurs', icon: UserCheck, adminOnly: true },
