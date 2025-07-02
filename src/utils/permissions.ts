@@ -42,6 +42,15 @@ export interface UserPermissions {
     delete: boolean;
     print: boolean;
   };
+  travel: {
+    view: boolean;
+    create: boolean;
+    edit: boolean;
+    delete: boolean;
+    print: boolean;
+    booking: boolean;
+    invoice: boolean;
+  };
   documents: {
     view: boolean;
     create: boolean;
@@ -74,6 +83,7 @@ export const getPermissionsByRole = (role: string): UserPermissions => {
     gps: { view: false, create: false, edit: false, delete: false, export: false },
     fuel: { view: false, create: false, edit: false, delete: false, print: false },
     violations: { view: false, create: false, edit: false, delete: false, print: false },
+    travel: { view: false, create: false, edit: false, delete: false, print: false, booking: false, invoice: false },
     documents: { view: false, create: false, edit: false, delete: false, download: false },
     reports: { view: false, generate: false, export: false },
     settings: { view: false, edit: false },
@@ -109,6 +119,7 @@ export const getPermissionsByRole = (role: string): UserPermissions => {
       basePermissions.gps = { view: true, create: false, edit: false, delete: false, export: true };
       basePermissions.fuel = { view: true, create: true, edit: true, delete: false, print: true };
       basePermissions.violations = { view: true, create: true, edit: true, delete: false, print: true };
+      basePermissions.travel = { view: true, create: true, edit: true, delete: false, print: true, booking: true, invoice: true };
       basePermissions.documents = { view: true, create: true, edit: false, delete: false, download: true };
       basePermissions.reports = { view: true, generate: true, export: false };
       basePermissions.settings = { view: true, edit: false };
@@ -124,6 +135,9 @@ export const getPermissionsByRole = (role: string): UserPermissions => {
           }
           if (module === 'reports') {
             basePermissions[module].generate = true;
+          }
+          if (module === 'travel') {
+            basePermissions[module].booking = true;
           }
         }
       });
