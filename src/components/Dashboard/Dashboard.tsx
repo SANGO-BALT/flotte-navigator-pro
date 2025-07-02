@@ -4,6 +4,7 @@ import { Car, Users, AlertTriangle, Wrench, Calendar, Fuel } from 'lucide-react'
 import StatsCard from './StatsCard';
 import VehicleAlerts from './VehicleAlerts';
 import MaintenanceSchedule from './MaintenanceSchedule';
+import FleetOverview from './FleetOverview';
 
 const Dashboard: React.FC = () => {
   const stats = [
@@ -46,25 +47,14 @@ const Dashboard: React.FC = () => {
         ))}
       </div>
 
-      {/* Graphiques et alertes */}
+      {/* Aperçu de la flotte avec graphiques fonctionnels */}
+      <FleetOverview />
+
+      {/* Alertes véhicules */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <div className="fleet-card">
-            <h3 className="text-lg font-semibold mb-4">Aperçu de la Flotte</h3>
-            <div className="h-64 bg-muted rounded-lg flex items-center justify-center">
-              <p className="text-muted-foreground">Graphique des véhicules par statut</p>
-            </div>
-          </div>
-        </div>
-
-        <div>
           <VehicleAlerts />
         </div>
-      </div>
-
-      {/* Planning de maintenance */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <MaintenanceSchedule />
         
         <div className="fleet-card">
           <h3 className="text-lg font-semibold mb-4">Consommation Carburant</h3>
@@ -93,6 +83,9 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Planning de maintenance */}
+      <MaintenanceSchedule />
     </div>
   );
 };

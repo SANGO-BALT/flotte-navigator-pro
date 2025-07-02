@@ -1,11 +1,12 @@
-
 import React, { useState } from 'react';
 import { Settings, User, Bell, Shield, Palette, Globe, Database, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useTheme } from './ThemeProvider';
 
 const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('general');
+  const { theme, setTheme } = useTheme();
   const [settings, setSettings] = useState({
     // Paramètres généraux
     companyName: 'Système de Gestion de Flotte',
@@ -26,7 +27,6 @@ const SettingsPage: React.FC = () => {
     
     // Personnalisation
     primaryColor: '#3b82f6',
-    theme: 'light',
     language: 'fr',
     currency: 'FCFA',
     
@@ -211,6 +211,24 @@ const SettingsPage: React.FC = () => {
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">
+            Thème de l'application
+          </label>
+          <select
+            value={theme}
+            onChange={(e) => setTheme(e.target.value as 'light' | 'dark' | 'system')}
+            className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+          >
+            <option value="light">Clair</option>
+            <option value="dark">Sombre</option>
+            <option value="system">Système (automatique)</option>
+          </select>
+          <p className="text-xs text-muted-foreground mt-1">
+            Le thème système s'adapte automatiquement aux préférences de votre appareil
+          </p>
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-2">
             Couleur principale
           </label>
           <div className="flex items-center space-x-2">
@@ -226,20 +244,6 @@ const SettingsPage: React.FC = () => {
               className="flex-1"
             />
           </div>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
-            Thème
-          </label>
-          <select
-            value={settings.theme}
-            onChange={(e) => handleSettingChange('theme', e.target.value)}
-            className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-          >
-            <option value="light">Clair</option>
-            <option value="dark">Sombre</option>
-            <option value="auto">Automatique</option>
-          </select>
         </div>
       </div>
     </div>

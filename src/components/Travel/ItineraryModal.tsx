@@ -27,10 +27,10 @@ const ItineraryModal: React.FC<ItineraryModalProps> = ({ itinerary, onClose, onS
     name: '',
     departure: '',
     destination: '',
-    distance: '',
+    distance: 0,
     duration: '',
-    priceSimple: '',
-    priceGroup: '',
+    priceSimple: 0,
+    priceGroup: 0,
     isActive: true,
   });
 
@@ -40,10 +40,10 @@ const ItineraryModal: React.FC<ItineraryModalProps> = ({ itinerary, onClose, onS
         name: itinerary.name || '',
         departure: itinerary.departure || '',
         destination: itinerary.destination || '',
-        distance: itinerary.distance?.toString() || '',
+        distance: itinerary.distance || 0,
         duration: itinerary.duration || '',
-        priceSimple: itinerary.priceSimple?.toString() || '',
-        priceGroup: itinerary.priceGroup?.toString() || '',
+        priceSimple: itinerary.priceSimple || 0,
+        priceGroup: itinerary.priceGroup || 0,
         isActive: itinerary.isActive ?? true,
       });
     }
@@ -51,31 +51,27 @@ const ItineraryModal: React.FC<ItineraryModalProps> = ({ itinerary, onClose, onS
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({
-      ...formData,
-      distance: Number(formData.distance),
-      priceSimple: Number(formData.priceSimple),
-      priceGroup: Number(formData.priceGroup),
-      id: itinerary?.id
-    });
+    onSave({ ...formData, id: itinerary?.id });
     onClose();
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    const { name, value, type } = e.target;
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: value
+      [name]: type === 'number' ? Number(value) : 
+               type === 'checkbox' ? (e.target as HTMLInputElement).checked : 
+               value
     }));
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-card rounded-lg w-full max-w-2xl">
+      <div className="bg-card rounded-lg w-full max-w-md">
         <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <MapPin className="w-6 h-6 text-green-500" />
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <MapPin className="w-6 h-6 text-blue-500" />
             </div>
             <h2 className="text-xl font-semibold text-foreground">
               {itinerary ? 'Modifier l\'itinéraire' : 'Nouvel itinéraire'}
@@ -100,7 +96,7 @@ const ItineraryModal: React.FC<ItineraryModalProps> = ({ itinerary, onClose, onS
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
                 Départ *
@@ -127,7 +123,7 @@ const ItineraryModal: React.FC<ItineraryModalProps> = ({ itinerary, onClose, onS
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
                 Distance (km) *
@@ -155,7 +151,7 @@ const ItineraryModal: React.FC<ItineraryModalProps> = ({ itinerary, onClose, onS
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
                 Prix billet simple (FCFA) *
@@ -187,12 +183,13 @@ const ItineraryModal: React.FC<ItineraryModalProps> = ({ itinerary, onClose, onS
           <div className="flex items-center space-x-2">
             <input
               type="checkbox"
+              id="isActive"
               name="isActive"
               checked={formData.isActive}
               onChange={handleChange}
-              className="rounded border-border"
+              className="rounded"
             />
-            <label className="text-sm text-foreground">
+            <label htmlFor="isActive" className="text-sm font-medium text-foreground">
               Itinéraire actif
             </label>
           </div>
@@ -202,7 +199,7 @@ const ItineraryModal: React.FC<ItineraryModalProps> = ({ itinerary, onClose, onS
               Annuler
             </Button>
             <Button type="submit" className="fleet-button-primary">
-              {itinerary ? 'Modifier' : 'Créer'}
+              {itinerary ? 'Modifier' : 'Créer'} l'itinéraire
             </Button>
           </div>
         </form>

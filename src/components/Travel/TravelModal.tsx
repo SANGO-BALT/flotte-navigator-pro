@@ -13,18 +13,18 @@ interface Travel {
   departureDate: string;
   departureTime: string;
   arrivalTime: string;
-  passengers: string;
-  capacity: string;
+  passengers: number;
+  capacity: number;
   driverName: string;
   status: string;
-  price: string;
-  distance: string;
+  price: number;
+  distance: number;
 }
 
 interface TravelModalProps {
   travel?: Travel | null;
   onClose: () => void;
-  onSave?: (travelData: any) => void;
+  onSave: (travel: Travel) => void;
 }
 
 const TravelModal: React.FC<TravelModalProps> = ({ travel, onClose, onSave }) => {
@@ -36,12 +36,12 @@ const TravelModal: React.FC<TravelModalProps> = ({ travel, onClose, onSave }) =>
     departureDate: '',
     departureTime: '',
     arrivalTime: '',
-    passengers: '',
-    capacity: '',
+    passengers: 0,
+    capacity: 0,
     driverName: '',
     status: 'programmé',
-    price: '',
-    distance: '',
+    price: 0,
+    distance: 0,
   });
 
   useEffect(() => {
@@ -54,29 +54,29 @@ const TravelModal: React.FC<TravelModalProps> = ({ travel, onClose, onSave }) =>
         departureDate: travel.departureDate || '',
         departureTime: travel.departureTime || '',
         arrivalTime: travel.arrivalTime || '',
-        passengers: travel.passengers?.toString() || '',
-        capacity: travel.capacity?.toString() || '',
+        passengers: travel.passengers || 0,
+        capacity: travel.capacity || 0,
         driverName: travel.driverName || '',
         status: travel.status || 'programmé',
-        price: travel.price?.toString() || '',
-        distance: travel.distance?.toString() || '',
+        price: travel.price || 0,
+        distance: travel.distance || 0,
       });
     }
   }, [travel]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(travel ? 'Modifier voyage:' : 'Nouveau voyage:', formData);
-    if (onSave) {
-      onSave(formData);
-    }
+    onSave({ ...formData, id: travel?.id });
     onClose();
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [name]: name === 'passengers' || name === 'capacity' || name === 'price' || name === 'distance' 
+        ? Number(value) 
+        : value
     }));
   };
 
@@ -98,7 +98,6 @@ const TravelModal: React.FC<TravelModalProps> = ({ travel, onClose, onSave }) =>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Véhicule et conducteur */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
@@ -112,7 +111,6 @@ const TravelModal: React.FC<TravelModalProps> = ({ travel, onClose, onSave }) =>
                 required
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
                 Marque/Modèle véhicule
@@ -139,7 +137,6 @@ const TravelModal: React.FC<TravelModalProps> = ({ travel, onClose, onSave }) =>
             />
           </div>
 
-          {/* Trajet */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
@@ -149,11 +146,10 @@ const TravelModal: React.FC<TravelModalProps> = ({ travel, onClose, onSave }) =>
                 name="departure"
                 value={formData.departure}
                 onChange={handleChange}
-                placeholder="Paris"
+                placeholder="Libreville"
                 required
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
                 Destination *
@@ -162,11 +158,10 @@ const TravelModal: React.FC<TravelModalProps> = ({ travel, onClose, onSave }) =>
                 name="destination"
                 value={formData.destination}
                 onChange={handleChange}
-                placeholder="Lyon"
+                placeholder="Port-Gentil"
                 required
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
                 Distance (km)
@@ -176,12 +171,11 @@ const TravelModal: React.FC<TravelModalProps> = ({ travel, onClose, onSave }) =>
                 type="number"
                 value={formData.distance}
                 onChange={handleChange}
-                placeholder="465"
+                placeholder="300"
               />
             </div>
           </div>
 
-          {/* Date et horaires */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
@@ -195,7 +189,6 @@ const TravelModal: React.FC<TravelModalProps> = ({ travel, onClose, onSave }) =>
                 required
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
                 Heure de départ *
@@ -208,7 +201,6 @@ const TravelModal: React.FC<TravelModalProps> = ({ travel, onClose, onSave }) =>
                 required
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
                 Heure d'arrivée prévue
@@ -222,7 +214,6 @@ const TravelModal: React.FC<TravelModalProps> = ({ travel, onClose, onSave }) =>
             </div>
           </div>
 
-          {/* Passagers et tarification */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
@@ -237,7 +228,6 @@ const TravelModal: React.FC<TravelModalProps> = ({ travel, onClose, onSave }) =>
                 required
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
                 Nombre de passagers
@@ -251,23 +241,21 @@ const TravelModal: React.FC<TravelModalProps> = ({ travel, onClose, onSave }) =>
                 max={formData.capacity}
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Prix par passager (€) *
+                Prix par passager (FCFA) *
               </label>
               <Input
                 name="price"
                 type="number"
                 value={formData.price}
                 onChange={handleChange}
-                placeholder="45"
+                placeholder="15000"
                 required
               />
             </div>
           </div>
 
-          {/* Statut */}
           {travel && (
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
@@ -287,24 +275,6 @@ const TravelModal: React.FC<TravelModalProps> = ({ travel, onClose, onSave }) =>
             </div>
           )}
 
-          {/* Résumé */}
-          {formData.passengers && formData.price && (
-            <div className="bg-muted p-4 rounded-lg">
-              <h4 className="font-medium text-foreground mb-2">Résumé financier</h4>
-              <p className="text-sm text-muted-foreground">
-                Revenus prévus: <span className="font-medium text-foreground">
-                  {Number(formData.passengers) * Number(formData.price)}€
-                </span>
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Taux de remplissage: <span className="font-medium text-foreground">
-                  {formData.capacity ? Math.round((Number(formData.passengers) / Number(formData.capacity)) * 100) : 0}%
-                </span>
-              </p>
-            </div>
-          )}
-
-          {/* Boutons d'action */}
           <div className="flex justify-end space-x-3 pt-4 border-t border-border">
             <Button type="button" variant="outline" onClick={onClose}>
               Annuler
