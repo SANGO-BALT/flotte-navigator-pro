@@ -1,77 +1,54 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, MapPin } from 'lucide-react';
+import { X, MapPin, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-interface Itinerary {
-  id?: string;
-  name: string;
-  departure: string;
-  destination: string;
-  distance: number;
-  duration: string;
-  priceSimple: number;
-  priceGroup: number;
-  isActive: boolean;
-}
-
 interface ItineraryModalProps {
-  itinerary?: Itinerary | null;
+  itinerary?: any;
   onClose: () => void;
-  onSave: (itinerary: Itinerary) => void;
+  onSave: (itineraryData: any) => void;
 }
 
 const ItineraryModal: React.FC<ItineraryModalProps> = ({ itinerary, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     name: '',
-    departure: '',
-    destination: '',
-    distance: 0,
-    duration: '',
-    priceSimple: 0,
-    priceGroup: 0,
+    departure: 'Libreville',
+    destination: 'Port-Gentil',
+    distance: 300,
+    duration: '5h 30min',
+    priceSimple: 15000,
+    priceGroup: 12000,
     isActive: true,
   });
 
   useEffect(() => {
     if (itinerary) {
-      setFormData({
-        name: itinerary.name || '',
-        departure: itinerary.departure || '',
-        destination: itinerary.destination || '',
-        distance: itinerary.distance || 0,
-        duration: itinerary.duration || '',
-        priceSimple: itinerary.priceSimple || 0,
-        priceGroup: itinerary.priceGroup || 0,
-        isActive: itinerary.isActive ?? true,
-      });
+      setFormData(itinerary);
     }
   }, [itinerary]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({ ...formData, id: itinerary?.id });
+    onSave(formData);
     onClose();
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
+    const value = e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'number' ? Number(value) : 
-               type === 'checkbox' ? (e.target as HTMLInputElement).checked : 
-               value
+      [e.target.name]: value
     }));
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-card rounded-lg w-full max-w-md">
+      <div className="bg-card rounded-lg w-full max-w-lg">
         <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <MapPin className="w-6 h-6 text-blue-500" />
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <MapPin className="w-6 h-6 text-primary" />
             </div>
             <h2 className="text-xl font-semibold text-foreground">
               {itinerary ? 'Modifier l\'itinéraire' : 'Nouvel itinéraire'}
@@ -91,91 +68,100 @@ const ItineraryModal: React.FC<ItineraryModalProps> = ({ itinerary, onClose, onS
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="Libreville - Port-Gentil"
+              placeholder="Ex: Libreville - Port-Gentil"
               required
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
                 Départ *
               </label>
-              <Input
+              <select
                 name="departure"
                 value={formData.departure}
                 onChange={handleChange}
-                placeholder="Libreville"
-                required
-              />
+                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+              >
+                <option value="Libreville">Libreville</option>
+                <option value="Port-Gentil">Port-Gentil</option>
+                <option value="Franceville">Franceville</option>
+                <option value="Oyem">Oyem</option>
+                <option value="Moanda">Moanda</option>
+              </select>
             </div>
+            
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
                 Destination *
               </label>
-              <Input
+              <select
                 name="destination"
                 value={formData.destination}
                 onChange={handleChange}
-                placeholder="Port-Gentil"
-                required
-              />
+                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+              >
+                <option value="Port-Gentil">Port-Gentil</option>
+                <option value="Libreville">Libreville</option>
+                <option value="Franceville">Franceville</option>
+                <option value="Oyem">Oyem</option>
+                <option value="Moanda">Moanda</option>
+              </select>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Distance (km) *
+                Distance (km)
               </label>
               <Input
                 name="distance"
                 type="number"
                 value={formData.distance}
                 onChange={handleChange}
-                placeholder="300"
-                required
+                min="0"
               />
             </div>
+            
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Durée estimée *
+                Durée estimée
               </label>
               <Input
                 name="duration"
                 value={formData.duration}
                 onChange={handleChange}
-                placeholder="5h 30min"
-                required
+                placeholder="Ex: 5h 30min"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Prix billet simple (FCFA) *
+                Prix billet simple (FCFA)
               </label>
               <Input
                 name="priceSimple"
                 type="number"
                 value={formData.priceSimple}
                 onChange={handleChange}
-                placeholder="15000"
-                required
+                min="0"
               />
             </div>
+            
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Prix billet groupe (FCFA) *
+                Prix billet groupe (FCFA)
               </label>
               <Input
                 name="priceGroup"
                 type="number"
                 value={formData.priceGroup}
                 onChange={handleChange}
-                placeholder="12000"
-                required
+                min="0"
               />
             </div>
           </div>
@@ -183,13 +169,12 @@ const ItineraryModal: React.FC<ItineraryModalProps> = ({ itinerary, onClose, onS
           <div className="flex items-center space-x-2">
             <input
               type="checkbox"
-              id="isActive"
               name="isActive"
               checked={formData.isActive}
               onChange={handleChange}
-              className="rounded"
+              className="w-4 h-4"
             />
-            <label htmlFor="isActive" className="text-sm font-medium text-foreground">
+            <label className="text-sm font-medium text-foreground">
               Itinéraire actif
             </label>
           </div>
