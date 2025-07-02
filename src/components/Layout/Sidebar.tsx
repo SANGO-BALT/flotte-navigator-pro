@@ -1,27 +1,33 @@
 
 import React from 'react';
-import { Car, Users, MapPin, Calendar, FileText, Settings, Home, Fuel, AlertTriangle, Wrench } from 'lucide-react';
+import { Car, Users, MapPin, Calendar, FileText, Settings, Home, Fuel, AlertTriangle, Wrench, UserCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SidebarProps {
   currentPage: string;
   onPageChange: (page: string) => void;
+  userRole?: string;
 }
 
 const navigationItems = [
   { id: 'dashboard', label: 'Tableau de bord', icon: Home },
   { id: 'vehicles', label: 'Véhicules', icon: Car },
-  { id: 'users', label: 'Utilisateurs', icon: Users },
+  { id: 'users', label: 'Personnels', icon: Users },
   { id: 'maintenance', label: 'Maintenance', icon: Wrench },
   { id: 'gps', label: 'GPS & Localisation', icon: MapPin },
   { id: 'fuel', label: 'Carburant', icon: Fuel },
   { id: 'violations', label: 'Contraventions', icon: AlertTriangle },
   { id: 'documents', label: 'Documents', icon: FileText },
   { id: 'reports', label: 'Rapports', icon: Calendar },
+  { id: 'user-management', label: 'Gestion Utilisateurs', icon: UserCheck, adminOnly: true },
   { id: 'settings', label: 'Paramètres', icon: Settings },
 ];
 
-const Sidebar: React.FC<SidebarProps> = ({ currentPage, onPageChange }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentPage, onPageChange, userRole }) => {
+  const filteredItems = navigationItems.filter(item => 
+    !item.adminOnly || userRole === 'super-admin'
+  );
+
   return (
     <div className="bg-card border-r border-border w-64 min-h-screen p-4">
       <div className="mb-8">
@@ -37,7 +43,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onPageChange }) => {
       </div>
 
       <nav className="space-y-2">
-        {navigationItems.map(({ id, label, icon: Icon }) => (
+        {filteredItems.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             onClick={() => onPageChange(id)}

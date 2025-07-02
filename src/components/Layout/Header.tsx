@@ -1,14 +1,16 @@
 
 import React from 'react';
-import { Search, Bell, User } from 'lucide-react';
+import { Search, Bell, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 interface HeaderProps {
   currentPageTitle: string;
+  currentUser?: any;
+  onLogout?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ currentPageTitle }) => {
+const Header: React.FC<HeaderProps> = ({ currentPageTitle, currentUser, onLogout }) => {
   return (
     <header className="bg-card border-b border-border px-6 py-4">
       <div className="flex items-center justify-between">
@@ -31,9 +33,21 @@ const Header: React.FC<HeaderProps> = ({ currentPageTitle }) => {
             <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-xs"></span>
           </Button>
 
-          <Button variant="outline" size="icon">
-            <User className="w-4 h-4" />
-          </Button>
+          {currentUser && (
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-muted-foreground">
+                {currentUser.firstName} {currentUser.lastName}
+              </span>
+              <Button variant="outline" size="icon">
+                <User className="w-4 h-4" />
+              </Button>
+              {onLogout && (
+                <Button variant="outline" size="icon" onClick={onLogout}>
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </header>
