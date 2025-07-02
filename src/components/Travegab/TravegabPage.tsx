@@ -1,15 +1,20 @@
 
 import React, { useState } from 'react';
-import { Search, Plus, Bus, Users, MapPin, Ticket, Calendar, Edit, Eye, FileText } from 'lucide-react';
+import { Search, Plus, Bus, Users, MapPin, Ticket, Calendar, Edit, Eye, FileText, Car } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import TravegabModal from './TravegabModal';
+import { useToast } from '@/hooks/use-toast';
 
 const TravegabPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('voyages');
   const [searchTerm, setSearchTerm] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<'voyage' | 'passenger' | 'reservation' | 'itinerary'>('voyage');
+  const { toast } = useToast();
 
   // Données de test pour présentation
-  const voyages = [
+  const [voyages, setVoyages] = useState([
     {
       id: '1',
       vehicule: 'BUS-001-GA',
@@ -46,15 +51,15 @@ const TravegabPage: React.FC = () => {
       statut: 'programmé',
       prix: 12000
     }
-  ];
+  ]);
 
-  const passagers = [
+  const [passagers, setPassagers] = useState([
     { id: '1', nom: 'Mbourou', prenom: 'Marie', telephone: '+241 01 23 45 67', email: 'marie.mbourou@email.ga' },
     { id: '2', nom: 'Obame', prenom: 'Jean', telephone: '+241 07 89 12 34', email: 'jean.obame@email.ga' },
     { id: '3', nom: 'Nguema', prenom: 'Paul', telephone: '+241 06 55 44 33', email: 'paul.nguema@email.ga' }
-  ];
+  ]);
 
-  const reservations = [
+  const [reservations, setReservations] = useState([
     {
       id: '1',
       numeroTicket: 'TK-001234',
@@ -75,9 +80,9 @@ const TravegabPage: React.FC = () => {
       statut: 'payé',
       dateReservation: '2024-07-12'
     }
-  ];
+  ]);
 
-  const itineraires = [
+  const [itineraires, setItineraires] = useState([
     {
       id: '1',
       nom: 'Libreville - Port-Gentil',
@@ -98,7 +103,7 @@ const TravegabPage: React.FC = () => {
       prix: 25000,
       actif: true
     }
-  ];
+  ]);
 
   const statusColors = {
     'programmé': 'bg-blue-100 text-blue-800',
@@ -114,6 +119,36 @@ const TravegabPage: React.FC = () => {
     { id: 'reservations', label: 'Réservations', icon: Ticket },
     { id: 'itineraires', label: 'Itinéraires', icon: MapPin }
   ];
+
+  const openModal = (type: 'voyage' | 'passenger' | 'reservation' | 'itinerary') => {
+    setModalType(type);
+    setModalOpen(true);
+  };
+
+  const handleSave = (data: any) => {
+    // Logique de sauvegarde selon le type
+    const newId = Date.now().toString();
+    
+    switch (modalType) {
+      case 'voyage':
+        setVoyages([...voyages, { ...data, id: newId, passagers: 0 }]);
+        break;
+      case 'passenger':
+        setPassagers([...passagers, { ...data, id: newId }]);
+        break;
+      case 'reservation':
+        setReservations([...reservations, { ...data, id: newId, numeroTicket: `TK-${newId}`, dateReservation: new Date().toISOString().split('T')[0] }]);
+        break;
+      case 'itinerary':
+        setItineraires([...itineraires, { ...data, id: newId, actif: true }]);
+        break;
+    }
+
+    toast({
+      title: "Succès",
+      description: `${modalType === 'voyage' ? 'Voyage' : modalType === 'passenger' ? 'Passager' : modalType === 'reservation' ? 'Réservation' : 'Itinéraire'} ajouté avec succès`,
+    });
+  };
 
   const filteredData = () => {
     const term = searchTerm.toLowerCase();
@@ -231,7 +266,10 @@ const TravegabPage: React.FC = () => {
             className="pl-10"
           />
         </div>
-        <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+        <Button 
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
+          onClick={() => openModal(activeTab === 'voyages' ? 'voyage' : activeTab === 'passagers' ? 'passenger' : activeTab === 'reservations' ? 'reservation' : 'itinerary')}
+        >
           <Plus className="w-4 h-4 mr-2" />
           Nouveau {activeTab.slice(0, -1)}
         </Button>
@@ -290,7 +328,10 @@ const TravegabPage: React.FC = () => {
                   {activeTab === 'voyages' && (
                     <>
                       <td className="py-4 px-6">
-                        <p className="font-medium text-foreground">{item.vehicule}</p>
+                        <div className="flex items-center space-x-2">
+                          <Car className="w-4 h-4 text-blue-500" />
+                          <p className="font-medium text-foreground">{item.vehicule}</p>
+                        </div>
                       </td>
                       <td className="py-4 px-6">
                         <p className="text-foreground">{item.depart} → {item.destination}</p>
@@ -417,6 +458,14 @@ const TravegabPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Modal */}
+      <TravegabModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSave={handleSave}
+        type={modalType}
+      />
     </div>
   );
 };
