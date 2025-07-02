@@ -9,7 +9,7 @@ import MaintenancePage from '@/components/Maintenance/MaintenancePage';
 import GPSPage from '@/components/GPS/GPSPage';
 import FuelPage from '@/components/Fuel/FuelPage';
 import ViolationsPage from '@/components/Violations/ViolationsPage';
-import TravelPage from '@/components/Travel/TravelPage';
+import TravegabPage from '@/components/Travegab/TravegabPage';
 import DocumentsPage from '@/components/Documents/DocumentsPage';
 import ReportsPage from '@/components/Reports/ReportsPage';
 import SettingsPage from '@/components/Settings/SettingsPage';
@@ -33,7 +33,7 @@ const Index = () => {
     gps: <GPSPage />,
     fuel: <FuelPage />,
     violations: <ViolationsPage />,
-    travel: <TravelPage />,
+    travel: <TravegabPage />,
     documents: <DocumentsPage />,
     reports: <ReportsPage />,
     settings: <SettingsPage />,
@@ -48,7 +48,7 @@ const Index = () => {
     gps: 'GPS & Localisation',
     fuel: 'Gestion Carburant',
     violations: 'Contraventions',
-    travel: 'Voyages & Transport',
+    travel: 'TRAVEGAB - Voyages & Transport',
     documents: 'Gestion Électronique des Documents',
     reports: 'Rapports et Analyses',
     settings: 'Paramètres',
