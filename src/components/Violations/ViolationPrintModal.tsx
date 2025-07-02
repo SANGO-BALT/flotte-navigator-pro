@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { X, AlertTriangle, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -25,6 +24,12 @@ interface ViolationPrintModalProps {
 const ViolationPrintModal: React.FC<ViolationPrintModalProps> = ({ violation, onClose }) => {
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleCancelPrint = () => {
+    if (confirm('Annuler l\'impression de la fiche de contravention ?')) {
+      onClose();
+    }
   };
 
   const statusLabels = {
@@ -57,6 +62,9 @@ const ViolationPrintModal: React.FC<ViolationPrintModalProps> = ({ violation, on
             <Button onClick={handlePrint} className="fleet-button-primary">
               <Printer className="w-4 h-4 mr-2" />
               Imprimer
+            </Button>
+            <Button onClick={handleCancelPrint} variant="outline">
+              Annuler impression
             </Button>
             <Button variant="ghost" size="icon" onClick={onClose}>
               <X className="w-5 h-5" />

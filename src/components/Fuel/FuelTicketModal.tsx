@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { X, Fuel, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -26,6 +25,12 @@ const FuelTicketModal: React.FC<FuelTicketModalProps> = ({ record, onClose }) =>
     window.print();
   };
 
+  const handleCancelPrint = () => {
+    if (confirm('Annuler l\'impression du ticket ?')) {
+      onClose();
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto print:shadow-none print:max-w-none print:max-h-none">
@@ -40,6 +45,9 @@ const FuelTicketModal: React.FC<FuelTicketModalProps> = ({ record, onClose }) =>
             <Button onClick={handlePrint} size="sm" className="fleet-button-primary">
               <Printer className="w-4 h-4 mr-2" />
               Imprimer
+            </Button>
+            <Button onClick={handleCancelPrint} variant="outline" size="sm">
+              Annuler impression
             </Button>
             <Button variant="ghost" size="icon" onClick={onClose}>
               <X className="w-4 h-4" />

@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { MapPin, Navigation, Search, Filter, RefreshCw, Calendar, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import GabonMapComponent from './GabonMapComponent';
+import OpenStreetMapComponent from './OpenStreetMapComponent';
 import GPSHistoryModal from './GPSHistoryModal';
+import { hasPermission } from '@/utils/permissions';
 
 const GPSPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -12,6 +13,9 @@ const GPSPage: React.FC = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [selectedVehicleForHistory, setSelectedVehicleForHistory] = useState<string>('');
 
+  // Simuler un utilisateur connecté - en réalité, cela viendrait du contexte
+  const currentUser = { role: 'manager' };
+
   // Véhicules avec coordonnées réelles du Gabon
   const vehicles = [
     {
@@ -19,10 +23,10 @@ const GPSPage: React.FC = () => {
       plate: 'AB-123-CD',
       brand: 'Peugeot 308',
       status: 'en-mouvement',
-      location: 'Avenue Bouet, Libreville',
+      location: 'Boulevard Triomphal, Libreville',
       speed: 45,
       lastUpdate: '2024-07-01 14:30',
-      coordinates: { lat: 0.4162, lng: 9.4673 }, // Libreville (capitale)
+      coordinates: { lat: 0.4162, lng: 9.4673 }, // Libreville centre
     },
     {
       id: '2',
@@ -32,7 +36,7 @@ const GPSPage: React.FC = () => {
       location: 'Port Môle, Port-Gentil',
       speed: 0,
       lastUpdate: '2024-07-01 14:25',
-      coordinates: { lat: -0.7193, lng: 8.7815 }, // Port-Gentil (ville pétrolière)
+      coordinates: { lat: -0.7193, lng: 8.7815 }, // Port-Gentil
     },
     {
       id: '3',
@@ -42,27 +46,37 @@ const GPSPage: React.FC = () => {
       location: 'Centre-ville, Franceville',
       speed: 30,
       lastUpdate: '2024-07-01 14:32',
-      coordinates: { lat: -1.6332, lng: 13.5833 }, // Franceville (sud-est)
+      coordinates: { lat: -1.6332, lng: 13.5833 }, // Franceville
     },
     {
       id: '4',
       plate: 'MN-012-OP',
       brand: 'Toyota Hilux',
       status: 'hors-ligne',
-      location: 'Route Nationale, Oyem',
+      location: 'Route Nationale N1, Oyem',
       speed: 0,
       lastUpdate: '2024-07-01 13:45',
-      coordinates: { lat: 1.5993, lng: 11.5793 }, // Oyem (nord)
+      coordinates: { lat: 1.5993, lng: 11.5793 }, // Oyem
     },
     {
-      id: '5',
+      id: '5',      
       plate: 'QR-345-ST',
       brand: 'Mercedes Sprinter',
       status: 'en-mouvement',
-      location: 'Lambaréné, Route Albert Schweitzer',
+      location: 'Hôpital Albert Schweitzer, Lambaréné',
       speed: 55,
       lastUpdate: '2024-07-01 14:35',
-      coordinates: { lat: -0.6998, lng: 10.2443 }, // Lambaréné (centre)
+      coordinates: { lat: -0.6998, lng: 10.2443 }, // Lambaréné
+    },
+    {
+      id: '6',
+      plate: 'UV-678-WX',
+      brand: 'Ford Ranger',
+      status: 'arrêté',
+      location: 'Mines de Moanda',
+      speed: 0,
+      lastUpdate: '2024-07-01 14:20',
+      coordinates: { lat: -1.5336, lng: 13.1987 }, // Moanda
     },
   ];
 
@@ -89,13 +103,30 @@ const GPSPage: React.FC = () => {
   };
 
   const handleRefresh = () => {
+    if (!hasPermission(currentUser.role, 'gps', 'edit')) {
+      alert('Vous n\'avez pas les permissions pour actualiser les positions GPS');
+      return;
+    }
     console.log('Actualisation des positions GPS...');
     alert('Positions GPS actualisées');
   };
 
   const handleViewHistory = (vehicleId: string) => {
+    if (!hasPermission(currentUser.role, 'gps', 'view')) {
+      alert('Vous n\'avez pas les permissions pour voir l\'historique GPS');
+      return;
+    }
     setSelectedVehicleForHistory(vehicleId);
     setShowHistory(true);
+  };
+
+  const handleExportGPS = () => {
+    if (!hasPermission(currentUser.role, 'gps', 'export')) {
+      alert('Vous n\'avez pas les permissions pour exporter les données GPS');
+      return;
+    }
+    console.log('Export des données GPS...');
+    alert('Export GPS généré avec succès');
   };
 
   const handleResetFilters = () => {
@@ -144,14 +175,18 @@ const GPSPage: React.FC = () => {
               <option value="hors-ligne">Hors ligne</option>
             </select>
             
-            <Button onClick={handleRefresh} variant="outline">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Actualiser
-            </Button>
+            {hasPermission(currentUser.role, 'gps', 'edit') && (
+              <Button onClick={handleRefresh} variant="outline">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Actualiser
+              </Button>
+            )}
 
-            <Button onClick={handleResetFilters} variant="outline">
-              Réinitialiser
-            </Button>
+            {hasPermission(currentUser.role, 'gps', 'export') && (
+              <Button onClick={handleExportGPS} variant="outline">
+                Exporter GPS
+              </Button>
+            )}
           </div>
         </div>
 
@@ -176,11 +211,11 @@ const GPSPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Carte du Gabon */}
+        {/* Carte OpenStreetMap du Gabon */}
         <div className="lg:col-span-2">
           <div className="fleet-card h-96">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-foreground">Carte du Gabon - Suivi GPS</h3>
+              <h3 className="text-lg font-semibold text-foreground">🇬🇦 Carte GPS - République Gabonaise</h3>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm">
                   <Navigation className="w-4 h-4 mr-2" />
@@ -193,7 +228,7 @@ const GPSPage: React.FC = () => {
             </div>
             
             <div className="w-full h-80">
-              <GabonMapComponent 
+              <OpenStreetMapComponent 
                 vehicles={filteredVehicles} 
                 selectedVehicle={selectedVehicle !== 'all' ? selectedVehicle : undefined}
               />
@@ -201,10 +236,10 @@ const GPSPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Liste des véhicules avec coordonnées du Gabon */}
+        {/* Liste des véhicules */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-foreground">
-            Véhicules trackés au Gabon ({filteredVehicles.length})
+            Véhicules au Gabon ({filteredVehicles.length})
           </h3>
           
           {filteredVehicles.map((vehicle) => (
@@ -234,14 +269,14 @@ const GPSPage: React.FC = () => {
                 
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">
-                    Coordonnées Gabon: {vehicle.coordinates.lat.toFixed(4)}°, {vehicle.coordinates.lng.toFixed(4)}°
+                    🇬🇦 {vehicle.coordinates.lat.toFixed(4)}°, {vehicle.coordinates.lng.toFixed(4)}°
                   </span>
                 </div>
                 
                 <div className="flex items-center gap-2">
                   <Clock className="w-3 h-3 text-muted-foreground" />
                   <p className="text-xs text-muted-foreground">
-                    Dernière mise à jour: {vehicle.lastUpdate}
+                    {vehicle.lastUpdate}
                   </p>
                 </div>
               </div>
@@ -253,17 +288,19 @@ const GPSPage: React.FC = () => {
                   className="flex-1"
                   onClick={() => setSelectedVehicle(vehicle.id)}
                 >
-                  Localiser sur carte
+                  Localiser
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={() => handleViewHistory(vehicle.id)}
-                >
-                  <Calendar className="w-3 h-3 mr-1" />
-                  Historique GPS
-                </Button>
+                {hasPermission(currentUser.role, 'gps', 'view') && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => handleViewHistory(vehicle.id)}
+                  >
+                    <Calendar className="w-3 h-3 mr-1" />
+                    Historique
+                  </Button>
+                )}
               </div>
             </div>
           ))}
@@ -284,7 +321,7 @@ const GPSPage: React.FC = () => {
             <div className="w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
           </div>
           <p className="text-2xl font-bold text-foreground">{vehicles.filter(v => v.status === 'en-mouvement').length}</p>
-          <p className="text-sm text-muted-foreground">En mouvement au Gabon</p>
+          <p className="text-sm text-muted-foreground">En mouvement</p>
         </div>
         <div className="fleet-card text-center">
           <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2">
