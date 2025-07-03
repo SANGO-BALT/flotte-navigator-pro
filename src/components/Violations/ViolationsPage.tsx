@@ -46,7 +46,7 @@ const ViolationsPage: React.FC = () => {
   const toComponentViolation = (violation: Violation): ComponentViolation => ({
     id: violation.id,
     vehiclePlate: violation.vehiclePlate || violation.vehiculeId || 'N/A',
-    vehicleBrand: violation.vehicleBrand,
+    vehicleBrand: '', // Not available in fleet Violation type
     type: violation.type,
     date: violation.date,
     location: violation.lieu || violation.location || 'Non spécifié',
@@ -55,6 +55,28 @@ const ViolationsPage: React.FC = () => {
     description: violation.description || '',
     driverName: violation.conducteurNom || violation.driverName || violation.conducteur || 'Non spécifié',
     referenceNumber: violation.numeroReference || violation.numeroContravention,
+  });
+
+  // Convert component Violation to fleet Violation
+  const toFleetViolation = (componentViolation: ComponentViolation, id?: string): Violation => ({
+    id: id || Date.now().toString(),
+    vehiculeId: componentViolation.vehiclePlate,
+    vehiclePlate: componentViolation.vehiclePlate,
+    conducteurId: 'unknown',
+    conducteurNom: componentViolation.driverName,
+    conducteur: componentViolation.driverName,
+    type: componentViolation.type as any,
+    description: componentViolation.description,
+    date: componentViolation.date,
+    lieu: componentViolation.location,
+    montant: Number(componentViolation.amount),
+    statut: componentViolation.status as any,
+    numeroContravention: componentViolation.referenceNumber || '',
+    numeroReference: componentViolation.referenceNumber,
+    location: componentViolation.location,
+    amount: Number(componentViolation.amount),
+    status: componentViolation.status,
+    driverName: componentViolation.driverName,
   });
 
   const filteredViolations = violations.filter(violation => {
@@ -120,19 +142,17 @@ const ViolationsPage: React.FC = () => {
     setShowPrintModal(true);
   };
 
-  const handleSave = (violationData: Omit<Violation, 'id'>) => {
+  const handleSave = (violationData: ComponentViolation) => {
     if (editingViolation) {
-      FleetDatabase.updateViolation(editingViolation.id, violationData);
+      const updatedViolation = toFleetViolation(violationData, editingViolation.id);
+      FleetDatabase.updateViolation(editingViolation.id, updatedViolation);
       toast({
         title: "Contravention modifiée",
         description: "La contravention a été modifiée avec succès.",
       });
     } else {
-      const newViolation: Violation = {
-        ...violationData,
-        id: Date.now().toString(),
-        numeroReference: `CV${new Date().getFullYear()}${String(violations.length + 1).padStart(3, '0')}`,
-      };
+      const newViolation = toFleetViolation(violationData);
+      newViolation.numeroReference = `CV${new Date().getFullYear()}${String(violations.length + 1).padStart(3, '0')}`;
       FleetDatabase.addViolation(newViolation);
       toast({
         title: "Contravention ajoutée",
@@ -170,7 +190,6 @@ const ViolationsPage: React.FC = () => {
                 id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
                 vehiculeId: violation.vehiculeId || violation.vehiclePlate || 'N/A',
                 vehiclePlate: violation.vehiclePlate || violation.vehiculeId || 'N/A',
-                vehicleBrand: violation.vehicleBrand || '',
                 conducteurId: violation.conducteurId || 'unknown',
                 conducteurNom: violation.conducteurNom || violation.driverName || 'Non spécifié',
                 type: violation.type || 'autre',
@@ -371,7 +390,7 @@ const ViolationsPage: React.FC = () => {
       {/* Modal d'ajout/modification de contravention */}
       {showModal && (
         <ViolationModal
-          violation={editingViolation}
+          violation={editingViolation ? toComponentViolation(editingViolation) : null}
           onClose={() => {
             setShowModal(false);
             setEditingViolation(null);
