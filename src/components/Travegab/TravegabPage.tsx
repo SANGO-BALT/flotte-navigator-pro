@@ -1,10 +1,11 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, Bus, Users, MapPin, Ticket, Calendar, Edit, Eye, FileText, Car } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import TravegabModal from './TravegabModal';
 import { useToast } from '@/hooks/use-toast';
+import { TravegabDatabase } from '@/services/database';
+import { Voyage, Passenger, Reservation, Itinerary } from '@/types/travegab';
 
 const TravegabPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('voyages');
@@ -15,97 +16,24 @@ const TravegabPage: React.FC = () => {
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const { toast } = useToast();
 
-  // Données de test pour présentation
-  const [voyages, setVoyages] = useState([
-    {
-      id: '1',
-      vehicule: 'BUS-001-GA',
-      depart: 'Libreville',
-      destination: 'Port-Gentil',
-      date: '2024-07-15',
-      heure: '08:00',
-      passagers: 28,
-      capacite: 35,
-      statut: 'confirmé',
-      prix: 15000
-    },
-    {
-      id: '2',
-      vehicule: 'BUS-002-GA',
-      depart: 'Libreville',
-      destination: 'Franceville',
-      date: '2024-07-16',
-      heure: '06:30',
-      passagers: 22,
-      capacite: 30,
-      statut: 'en-cours',
-      prix: 25000
-    },
-    {
-      id: '3',
-      vehicule: 'BUS-003-GA',
-      depart: 'Port-Gentil',
-      destination: 'Lambaréné',
-      date: '2024-07-17',
-      heure: '14:00',
-      passagers: 15,
-      capacite: 25,
-      statut: 'programmé',
-      prix: 12000
-    }
-  ]);
+  // États pour les données
+  const [voyages, setVoyages] = useState<Voyage[]>([]);
+  const [passagers, setPassagers] = useState<Passenger[]>([]);
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [itineraires, setItineraires] = useState<Itinerary[]>([]);
 
-  const [passagers, setPassagers] = useState([
-    { id: '1', nom: 'Mbourou', prenom: 'Marie', telephone: '+241 01 23 45 67', email: 'marie.mbourou@email.ga' },
-    { id: '2', nom: 'Obame', prenom: 'Jean', telephone: '+241 07 89 12 34', email: 'jean.obame@email.ga' },
-    { id: '3', nom: 'Nguema', prenom: 'Paul', telephone: '+241 06 55 44 33', email: 'paul.nguema@email.ga' }
-  ]);
+  // Initialiser la base de données et charger les données
+  useEffect(() => {
+    TravegabDatabase.initializeDatabase();
+    loadData();
+  }, []);
 
-  const [reservations, setReservations] = useState([
-    {
-      id: '1',
-      numeroTicket: 'TK-001234',
-      passager: 'Marie Mbourou',
-      voyage: 'Libreville → Port-Gentil',
-      siege: 'A12',
-      montant: 15000,
-      statut: 'confirmé',
-      dateReservation: '2024-07-10'
-    },
-    {
-      id: '2',
-      numeroTicket: 'TK-001235',
-      passager: 'Jean Obame',
-      voyage: 'Libreville → Franceville',
-      siege: 'B08',
-      montant: 25000,
-      statut: 'payé',
-      dateReservation: '2024-07-12'
-    }
-  ]);
-
-  const [itineraires, setItineraires] = useState([
-    {
-      id: '1',
-      nom: 'Libreville - Port-Gentil',
-      depart: 'Libreville',
-      destination: 'Port-Gentil',
-      distance: 300,
-      duree: '5h 30min',
-      prix: 15000,
-      actif: true
-    },
-    {
-      id: '2',
-      nom: 'Libreville - Franceville',
-      depart: 'Libreville',
-      destination: 'Franceville',
-      distance: 650,
-      duree: '10h 45min',
-      prix: 25000,
-      actif: true
-    }
-  ]);
+  const loadData = () => {
+    setVoyages(TravegabDatabase.getVoyages());
+    setPassagers(TravegabDatabase.getPassengers());
+    setReservations(TravegabDatabase.getReservations());
+    setItineraires(TravegabDatabase.getItineraries());
+  };
 
   const statusColors = {
     'programmé': 'bg-blue-100 text-blue-800',
@@ -136,15 +64,18 @@ const TravegabPage: React.FC = () => {
     switch (modalType) {
       case 'voyage':
         if (modalMode === 'create') {
-          setVoyages([...voyages, { ...data, id: newId, passagers: 0 }]);
+          const newVoyage = { ...data, id: newId, passagers: 0 };
+          TravegabDatabase.addVoyage(newVoyage);
         } else {
-          setVoyages(voyages.map(v => v.id === newId ? { ...v, ...data } : v));
+          TravegabDatabase.updateVoyage(newId, data);
         }
+        setVoyages(TravegabDatabase.getVoyages());
         break;
+        
       case 'passenger':
         if (modalMode === 'create') {
           const newPassenger = { ...data, id: newId };
-          setPassagers([...passagers, newPassenger]);
+          TravegabDatabase.addPassenger(newPassenger);
           
           // Si un voyage est assigné, créer automatiquement une réservation
           if (data.voyageAssigne) {
@@ -157,34 +88,42 @@ const TravegabPage: React.FC = () => {
                 voyage: `${voyage.depart} → ${voyage.destination}`,
                 siege: `A${Math.floor(Math.random() * 30) + 1}`,
                 montant: voyage.prix,
-                statut: 'confirmé',
+                statut: 'confirmé' as const,
                 dateReservation: new Date().toISOString().split('T')[0]
               };
-              setReservations([...reservations, newReservation]);
+              TravegabDatabase.addReservation(newReservation);
+              setReservations(TravegabDatabase.getReservations());
             }
           }
         } else {
-          setPassagers(passagers.map(p => p.id === newId ? { ...p, ...data } : p));
+          TravegabDatabase.updatePassenger(newId, data);
         }
+        setPassagers(TravegabDatabase.getPassagers());
         break;
+        
       case 'reservation':
         if (modalMode === 'create') {
-          setReservations([...reservations, { 
+          const newReservation = { 
             ...data, 
             id: newId, 
             numeroTicket: `TK-${newId}`, 
             dateReservation: new Date().toISOString().split('T')[0] 
-          }]);
+          };
+          TravegabDatabase.addReservation(newReservation);
         } else {
-          setReservations(reservations.map(r => r.id === newId ? { ...r, ...data } : r));
+          TravegabDatabase.updateReservation(newId, data);
         }
+        setReservations(TravegabDatabase.getReservations());
         break;
+        
       case 'itinerary':
         if (modalMode === 'create') {
-          setItineraires([...itineraires, { ...data, id: newId, actif: true }]);
+          const newItinerary = { ...data, id: newId, actif: true };
+          TravegabDatabase.addItinerary(newItinerary);
         } else {
-          setItineraires(itineraires.map(i => i.id === newId ? { ...i, ...data } : i));
+          TravegabDatabase.updateItinerary(newId, data);
         }
+        setItineraires(TravegabDatabase.getItineraries());
         break;
     }
 
@@ -202,16 +141,20 @@ const TravegabPage: React.FC = () => {
   const handleDelete = (id: string) => {
     switch (modalType) {
       case 'voyage':
-        setVoyages(voyages.filter(v => v.id !== id));
+        TravegabDatabase.deleteVoyage(id);
+        setVoyages(TravegabDatabase.getVoyages());
         break;
       case 'passenger':
-        setPassagers(passagers.filter(p => p.id !== id));
+        TravegabDatabase.deletePassenger(id);
+        setPassagers(TravegabDatabase.getPassengers());
         break;
       case 'reservation':
-        setReservations(reservations.filter(r => r.id !== id));
+        TravegabDatabase.deleteReservation(id);
+        setReservations(TravegabDatabase.getReservations());
         break;
       case 'itinerary':
-        setItineraires(itineraires.filter(i => i.id !== id));
+        TravegabDatabase.deleteItinerary(id);
+        setItineraires(TravegabDatabase.getItineraries());
         break;
     }
 

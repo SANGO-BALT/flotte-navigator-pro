@@ -8,6 +8,7 @@ import PassengerForm from './forms/PassengerForm';
 import ReservationForm from './forms/ReservationForm';
 import ItineraryForm from './forms/ItineraryForm';
 import TicketPrintPreview from './TicketPrintPreview';
+import { TravegabDatabase } from '@/services/database';
 
 interface TravegabModalProps {
   isOpen: boolean;
@@ -19,14 +20,6 @@ interface TravegabModalProps {
   mode?: 'create' | 'edit' | 'view';
   voyagesData?: any[];
 }
-
-// Données de véhicules simulées (à connecter avec le vrai système)
-const availableVehicles = [
-  { id: 'BUS-001-GA', nom: 'Bus Mercedes 35 places', capacite: 35, statut: 'disponible' },
-  { id: 'BUS-002-GA', nom: 'Bus Toyota 30 places', capacite: 30, statut: 'disponible' },
-  { id: 'BUS-003-GA', nom: 'Bus Isuzu 25 places', capacite: 25, statut: 'disponible' },
-  { id: 'VAN-001-GA', nom: 'Van Toyota Hiace', capacite: 12, statut: 'disponible' },
-];
 
 const TravegabModal: React.FC<TravegabModalProps> = ({ 
   isOpen, 
@@ -40,6 +33,9 @@ const TravegabModal: React.FC<TravegabModalProps> = ({
 }) => {
   const [formData, setFormData] = useState(initialData || {});
   const [showPrintPreview, setShowPrintPreview] = useState(false);
+
+  // Charger les véhicules depuis la base de données
+  const availableVehicles = TravegabDatabase.getVehicles();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
