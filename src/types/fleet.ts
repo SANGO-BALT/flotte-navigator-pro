@@ -18,6 +18,23 @@ export interface Vehicle {
   dateVisite: string;
   responsable?: string;
   notes?: string;
+  // Additional properties for VehicleCard compatibility
+  plate?: string;
+  brand?: string;
+  model?: string;
+  year?: string;
+  serviceDate?: string;
+  circulationDate?: string;
+  mileage?: string;
+  engine?: string;
+  fuel?: string;
+  transmission?: string;
+  insurance?: string;
+  registrationCard?: string;
+  vehicleFunction?: string;
+  image?: string;
+  status?: string;
+  nextMaintenance?: string;
 }
 
 // Types pour le module Utilisateurs
@@ -87,18 +104,25 @@ export interface Violation {
   vehiclePlate: string;
   conducteurId: string;
   conducteurNom: string;
-  type: 'exces-vitesse' | 'stationnement' | 'feu-rouge' | 'autre';
+  conducteur: string; // Add this for compatibility
+  type: 'excès-vitesse' | 'stationnement' | 'feu-rouge' | 'téléphone' | 'ceinture' | 'autre';
   description: string;
   date: string;
   lieu: string;
   montant: number;
-  statut: 'en-attente' | 'payé' | 'contesté' | 'annulé';
+  statut: 'en-attente' | 'payée' | 'contestée' | 'annulée';
   numeroContravention: string;
+  numeroReference?: string; // Add this property
   dateEcheance?: string;
   datePaiement?: string;
   points?: number;
   tribunalCompetent?: string;
   notes?: string;
+  // Additional properties for compatibility
+  location?: string;
+  amount?: number;
+  status?: string;
+  driverName?: string;
 }
 
 // Types pour le module GPS

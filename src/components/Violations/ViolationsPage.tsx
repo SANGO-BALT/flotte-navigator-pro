@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, AlertTriangle, Calendar, Eye, Edit, Trash, Printer, Download, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -29,7 +28,7 @@ const ViolationsPage: React.FC = () => {
 
   const filteredViolations = violations.filter(violation => {
     const matchesSearch = violation.vehiculeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         violation.conducteur.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         violation.conducteurNom.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          violation.lieu.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || violation.statut === statusFilter;
@@ -98,11 +97,18 @@ const ViolationsPage: React.FC = () => {
         description: "La contravention a été modifiée avec succès.",
       });
     } else {
-      FleetDatabase.addViolation({
+      const newViolation = {
         ...violationData,
         id: Date.now().toString(),
         numeroReference: `CV${new Date().getFullYear()}${String(violations.length + 1).padStart(3, '0')}`,
-      });
+        // Ensure compatibility fields are set
+        conducteur: violationData.conducteurNom,
+        location: violationData.lieu,
+        amount: violationData.montant,
+        status: violationData.statut,
+        driverName: violationData.conducteurNom,
+      };
+      FleetDatabase.addViolation(newViolation);
       toast({
         title: "Contravention ajoutée",
         description: "La nouvelle contravention a été enregistrée avec succès.",
@@ -135,10 +141,17 @@ const ViolationsPage: React.FC = () => {
           const importedData = JSON.parse(e.target?.result as string);
           if (Array.isArray(importedData)) {
             importedData.forEach(violation => {
-              FleetDatabase.addViolation({
+              const newViolation = {
                 ...violation,
                 id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-              });
+                // Ensure compatibility fields are set
+                conducteur: violation.conducteurNom || violation.conducteur,
+                location: violation.lieu || violation.location,
+                amount: violation.montant || violation.amount,
+                status: violation.statut || violation.status,
+                driverName: violation.conducteurNom || violation.driverName,
+              };
+              FleetDatabase.addViolation(newViolation);
             });
             loadViolations();
             toast({
@@ -264,7 +277,7 @@ const ViolationsPage: React.FC = () => {
               {filteredViolations.map((violation) => (
                 <tr key={violation.id} className="border-b border-border hover:bg-muted/50">
                   <td className="py-3 px-4">
-                    <p className="font-mono text-sm text-foreground">{violation.numeroReference}</p>
+                    <p className="font-mono text-sm text-foreground">{violation.numeroReference || violation.numeroContravention}</p>
                   </td>
                   <td className="py-3 px-4">
                     <p className="text-sm text-foreground">{new Date(violation.date).toLocaleDateString('fr-FR')}</p>
@@ -273,7 +286,7 @@ const ViolationsPage: React.FC = () => {
                     <p className="font-medium text-foreground">{violation.vehiculeId}</p>
                   </td>
                   <td className="py-3 px-4">
-                    <p className="text-sm text-foreground">{violation.conducteur}</p>
+                    <p className="text-sm text-foreground">{violation.conducteurNom}</p>
                   </td>
                   <td className="py-3 px-4">
                     <p className="text-sm text-foreground">{typeLabels[violation.type] || violation.type}</p>
