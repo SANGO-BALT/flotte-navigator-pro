@@ -98,7 +98,7 @@ const TravegabPage: React.FC = () => {
         } else {
           TravegabDatabase.updatePassenger(newId, data);
         }
-        setPassagers(TravegabDatabase.getPassagers());
+        setPassagers(TravegabDatabase.getPassengers());
         break;
         
       case 'reservation':
