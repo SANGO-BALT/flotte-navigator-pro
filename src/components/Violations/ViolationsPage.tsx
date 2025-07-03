@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, AlertTriangle, Calendar, Eye, Edit, Trash, Printer, Download, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -97,11 +98,11 @@ const ViolationsPage: React.FC = () => {
         description: "La contravention a été modifiée avec succès.",
       });
     } else {
-      const newViolation = {
+      const newViolation: Violation = {
         ...violationData,
         id: Date.now().toString(),
         numeroReference: `CV${new Date().getFullYear()}${String(violations.length + 1).padStart(3, '0')}`,
-        // Ensure compatibility fields are set
+        // Ensure all compatibility fields are set
         conducteur: violationData.conducteurNom,
         location: violationData.lieu,
         amount: violationData.montant,
@@ -141,15 +142,16 @@ const ViolationsPage: React.FC = () => {
           const importedData = JSON.parse(e.target?.result as string);
           if (Array.isArray(importedData)) {
             importedData.forEach(violation => {
-              const newViolation = {
+              const newViolation: Violation = {
                 ...violation,
                 id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-                // Ensure compatibility fields are set
-                conducteur: violation.conducteurNom || violation.conducteur,
-                location: violation.lieu || violation.location,
-                amount: violation.montant || violation.amount,
-                status: violation.statut || violation.status,
-                driverName: violation.conducteurNom || violation.driverName,
+                // Ensure all compatibility fields are set
+                conducteur: violation.conducteurNom || violation.conducteur || 'Non spécifié',
+                location: violation.lieu || violation.location || 'Non spécifié',
+                amount: violation.montant || violation.amount || 0,
+                status: violation.statut || violation.status || 'en-attente',
+                driverName: violation.conducteurNom || violation.driverName || 'Non spécifié',
+                numeroReference: violation.numeroReference || `CV${new Date().getFullYear()}${String(Math.random() * 1000).padStart(3, '0')}`,
               };
               FleetDatabase.addViolation(newViolation);
             });
