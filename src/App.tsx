@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@/components/Settings/ThemeProvider';
 import { Toaster } from '@/components/ui/sonner';
 import Layout from '@/components/Layout/Layout';
@@ -25,7 +25,8 @@ import './App.css';
 // Component to get current page title based on route
 const AppContent = () => {
   const location = useLocation();
-  const [isLoggedIn, setIsLoggedIn] = useState(true); // Start logged in for development
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   const getPageTitle = () => {
     switch (location.pathname) {
@@ -46,20 +47,37 @@ const AppContent = () => {
     }
   };
 
-  const handleLogin = () => {
+  const handleLogin = (userData: any) => {
     setIsLoggedIn(true);
+    setCurrentUser(userData);
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setCurrentUser(null);
   };
 
-  if (location.pathname === '/login' && !isLoggedIn) {
+  // Si pas connecté et pas sur la page de connexion, rediriger vers login
+  if (!isLoggedIn && location.pathname !== '/login') {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Si connecté et sur la page de connexion, rediriger vers dashboard
+  if (isLoggedIn && location.pathname === '/login') {
+    return <Navigate to="/" replace />;
+  }
+
+  // Page de connexion
+  if (location.pathname === '/login') {
     return <LoginPage onLogin={handleLogin} />;
   }
 
   return (
-    <Layout currentPageTitle={getPageTitle()} onLogout={handleLogout}>
+    <Layout 
+      currentPageTitle={getPageTitle()} 
+      currentUser={currentUser}
+      onLogout={handleLogout}
+    >
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/vehicles" element={<VehiclesPage />} />
