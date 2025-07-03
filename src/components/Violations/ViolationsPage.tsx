@@ -9,12 +9,27 @@ import { Violation } from '@/types/fleet';
 import ViolationModal from './ViolationModal';
 import ViolationPrintModal from './ViolationPrintModal';
 
+// Type adapter for components that expect different Violation interface
+interface ComponentViolation {
+  id?: string;
+  vehiclePlate: string;
+  vehicleBrand?: string;
+  type: string;
+  date: string;
+  location: string;
+  amount: string;
+  status: string;
+  description: string;
+  driverName: string;
+  referenceNumber?: string;
+}
+
 const ViolationsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showModal, setShowModal] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
-  const [selectedViolation, setSelectedViolation] = useState<Violation | null>(null);
+  const [selectedViolation, setSelectedViolation] = useState<ComponentViolation | null>(null);
   const [editingViolation, setEditingViolation] = useState<Violation | null>(null);
   const [violations, setViolations] = useState<Violation[]>([]);
 
@@ -26,6 +41,21 @@ const ViolationsPage: React.FC = () => {
     const violationsList = FleetDatabase.getViolations();
     setViolations(violationsList);
   };
+
+  // Convert fleet Violation to component Violation
+  const toComponentViolation = (violation: Violation): ComponentViolation => ({
+    id: violation.id,
+    vehiclePlate: violation.vehiclePlate || violation.vehiculeId || 'N/A',
+    vehicleBrand: violation.vehicleBrand,
+    type: violation.type,
+    date: violation.date,
+    location: violation.lieu || violation.location || 'Non spécifié',
+    amount: violation.montant?.toString() || violation.amount?.toString() || '0',
+    status: violation.statut || violation.status || 'en-attente',
+    description: violation.description || '',
+    driverName: violation.conducteurNom || violation.driverName || violation.conducteur || 'Non spécifié',
+    referenceNumber: violation.numeroReference || violation.numeroContravention,
+  });
 
   const filteredViolations = violations.filter(violation => {
     const matchesSearch = violation.vehiculeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -65,7 +95,7 @@ const ViolationsPage: React.FC = () => {
   };
 
   const handleView = (violation: Violation) => {
-    setSelectedViolation(violation);
+    setSelectedViolation(toComponentViolation(violation));
     setShowPrintModal(true);
   };
 
@@ -86,7 +116,7 @@ const ViolationsPage: React.FC = () => {
   };
 
   const handlePrint = (violation: Violation) => {
-    setSelectedViolation(violation);
+    setSelectedViolation(toComponentViolation(violation));
     setShowPrintModal(true);
   };
 
@@ -102,12 +132,6 @@ const ViolationsPage: React.FC = () => {
         ...violationData,
         id: Date.now().toString(),
         numeroReference: `CV${new Date().getFullYear()}${String(violations.length + 1).padStart(3, '0')}`,
-        // Ensure all compatibility fields are set
-        conducteur: violationData.conducteurNom,
-        location: violationData.lieu,
-        amount: violationData.montant,
-        status: violationData.statut,
-        driverName: violationData.conducteurNom,
       };
       FleetDatabase.addViolation(newViolation);
       toast({
@@ -143,15 +167,26 @@ const ViolationsPage: React.FC = () => {
           if (Array.isArray(importedData)) {
             importedData.forEach(violation => {
               const newViolation: Violation = {
-                ...violation,
                 id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-                // Ensure all compatibility fields are set
-                conducteur: violation.conducteurNom || violation.conducteur || 'Non spécifié',
+                vehiculeId: violation.vehiculeId || violation.vehiclePlate || 'N/A',
+                vehiclePlate: violation.vehiclePlate || violation.vehiculeId || 'N/A',
+                vehicleBrand: violation.vehicleBrand || '',
+                conducteurId: violation.conducteurId || 'unknown',
+                conducteurNom: violation.conducteurNom || violation.driverName || 'Non spécifié',
+                type: violation.type || 'autre',
+                description: violation.description || '',
+                date: violation.date || new Date().toISOString().split('T')[0],
+                lieu: violation.lieu || violation.location || 'Non spécifié',
+                montant: Number(violation.montant || violation.amount || 0),
+                statut: violation.statut || violation.status || 'en-attente',
+                numeroContravention: violation.numeroContravention || violation.referenceNumber || '',
+                numeroReference: violation.numeroReference || `CV${new Date().getFullYear()}${String(Math.random() * 1000).padStart(3, '0')}`,
+                // Compatibility fields
+                conducteur: violation.conducteurNom || violation.driverName || 'Non spécifié',
                 location: violation.lieu || violation.location || 'Non spécifié',
-                amount: violation.montant || violation.amount || 0,
+                amount: Number(violation.montant || violation.amount || 0),
                 status: violation.statut || violation.status || 'en-attente',
                 driverName: violation.conducteurNom || violation.driverName || 'Non spécifié',
-                numeroReference: violation.numeroReference || `CV${new Date().getFullYear()}${String(Math.random() * 1000).padStart(3, '0')}`,
               };
               FleetDatabase.addViolation(newViolation);
             });
