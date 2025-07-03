@@ -1,8 +1,11 @@
 
-import React, { useState } from 'react';
-import { Search, Plus, Filter, Car, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Plus, Filter, Car, AlertTriangle, Download, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/hooks/use-toast';
+import { FleetDatabase } from '@/services/fleetDatabase';
+import { Vehicle } from '@/types/fleet';
 import VehicleCard from './VehicleCard';
 import VehicleModal from './VehicleModal';
 
@@ -11,96 +14,100 @@ const VehiclesPage: React.FC = () => {
   const [filterType, setFilterType] = useState('all');
   const [showModal, setShowModal] = useState(false);
   const [showOldVehicles, setShowOldVehicles] = useState(false);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
 
-  // Données d'exemple des véhicules
-  const [vehicles, setVehicles] = useState([
-    {
-      id: '1',
-      plate: 'AB-123-CD',
-      brand: 'Peugeot',
-      model: '308',
-      type: 'Voiture',
-      year: '2019',
-      serviceDate: '2019-03-15',
-      circulationDate: '2019-03-20',
-      image: '/placeholder.svg',
-      status: 'active',
-      mileage: '85000',
-      nextMaintenance: '2024-08-15',
-      transmission: 'Manuelle',
-      engine: '1.6 HDi',
-      fuel: 'diesel',
-      insurance: 'ASS123456789',
-      registrationCard: 'CG123456789',
-      vehicleFunction: 'transport-personnel',
-    },
-    {
-      id: '2',
-      plate: 'EF-456-GH',
-      brand: 'Renault',
-      model: 'Trafic',
-      type: 'Utilitaire',
-      year: '2020',
-      serviceDate: '2020-01-10',
-      circulationDate: '2020-01-15',
-      image: '/placeholder.svg',
-      status: 'maintenance',
-      mileage: '120000',
-      nextMaintenance: '2024-07-30',
-      transmission: 'Automatique',
-      engine: '2.0 dCi',
-      fuel: 'diesel',
-      insurance: 'ASS987654321',
-      registrationCard: 'CG987654321',
-      vehicleFunction: 'transport-fret',
-    },
-    {
-      id: '3',
-      plate: 'IJ-789-KL',
-      brand: 'Yamaha',
-      model: 'MT-07',
-      type: 'Moto',
-      year: '2018',
-      serviceDate: '2018-06-25',
-      circulationDate: '2018-06-25',
-      image: '/placeholder.svg',
-      status: 'active',
-      mileage: '45000',
-      nextMaintenance: '2024-09-10',
-      transmission: 'Manuelle',
-      engine: '689cc',
-      fuel: 'essence',
-      insurance: 'ASS456789123',
-      registrationCard: 'CG456789123',
-      vehicleFunction: 'liaison',
-    },
-  ]);
+  useEffect(() => {
+    loadVehicles();
+  }, []);
+
+  const loadVehicles = () => {
+    const vehiclesList = FleetDatabase.getVehicles();
+    setVehicles(vehiclesList);
+  };
 
   const filteredVehicles = vehicles.filter(vehicle => {
-    const matchesSearch = vehicle.plate.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         vehicle.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         vehicle.model.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = vehicle.immatriculation.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         vehicle.marque.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         vehicle.modele.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesFilter = filterType === 'all' || vehicle.type.toLowerCase() === filterType.toLowerCase();
     
-    const serviceYears = new Date().getFullYear() - new Date(vehicle.serviceDate).getFullYear();
+    const serviceYears = new Date().getFullYear() - new Date(vehicle.dateAchat).getFullYear();
     const matchesAgeFilter = showOldVehicles ? serviceYears >= 5 : true;
     
     return matchesSearch && matchesFilter && matchesAgeFilter;
   });
 
   const oldVehiclesCount = vehicles.filter(v => {
-    const serviceYears = new Date().getFullYear() - new Date(v.serviceDate).getFullYear();
+    const serviceYears = new Date().getFullYear() - new Date(v.dateAchat).getFullYear();
     return serviceYears >= 5;
   }).length;
 
-  const handleUpdateVehicle = (updatedVehicle: any) => {
-    setVehicles(prev => prev.map(v => v.id === updatedVehicle.id ? updatedVehicle : v));
+  const handleUpdateVehicle = (updatedVehicle: Vehicle) => {
+    FleetDatabase.updateVehicle(updatedVehicle.id, updatedVehicle);
+    loadVehicles();
+    toast({
+      title: "Véhicule modifié",
+      description: "Le véhicule a été modifié avec succès.",
+    });
   };
 
-  const handleAddVehicle = (newVehicle: any) => {
-    const vehicleWithId = { ...newVehicle, id: Date.now().toString() };
-    setVehicles(prev => [...prev, vehicleWithId]);
+  const handleAddVehicle = (newVehicle: Omit<Vehicle, 'id'>) => {
+    FleetDatabase.addVehicle({
+      ...newVehicle,
+      id: Date.now().toString(),
+    });
+    loadVehicles();
+    toast({
+      title: "Véhicule ajouté",
+      description: "Le nouveau véhicule a été enregistré avec succès.",
+    });
+  };
+
+  const handleExport = () => {
+    const dataStr = JSON.stringify(vehicles, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    const exportFileDefaultName = `vehicules_${new Date().toISOString().split('T')[0]}.json`;
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+    toast({
+      title: "Export réussi",
+      description: "Les véhicules ont été exportés avec succès.",
+    });
+  };
+
+  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const importedData = JSON.parse(e.target?.result as string);
+          if (Array.isArray(importedData)) {
+            importedData.forEach(vehicle => {
+              FleetDatabase.addVehicle({
+                ...vehicle,
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+              });
+            });
+            loadVehicles();
+            toast({
+              title: "Import réussi",
+              description: `${importedData.length} véhicules importés avec succès.`,
+            });
+          }
+        } catch (error) {
+          toast({
+            title: "Erreur d'import",
+            description: "Le fichier n'est pas au bon format.",
+            variant: "destructive",
+          });
+        }
+      };
+      reader.readAsText(file);
+    }
   };
 
   return (
@@ -127,6 +134,7 @@ const VehiclesPage: React.FC = () => {
             <option value="voiture">Voitures</option>
             <option value="utilitaire">Utilitaires</option>
             <option value="moto">Motos</option>
+            <option value="camion">Camions</option>
           </select>
           
           <Button 
@@ -136,6 +144,26 @@ const VehiclesPage: React.FC = () => {
             <AlertTriangle className="w-4 h-4 mr-2" />
             ≥ 5 ans ({oldVehiclesCount})
           </Button>
+          
+          <Button variant="outline" size="sm" onClick={handleExport}>
+            <Download className="w-4 h-4 mr-2" />
+            Exporter
+          </Button>
+          
+          <label className="cursor-pointer">
+            <Button variant="outline" size="sm" asChild>
+              <span>
+                <Upload className="w-4 h-4 mr-2" />
+                Importer
+              </span>
+            </Button>
+            <input
+              type="file"
+              accept=".json"
+              onChange={handleImport}
+              className="hidden"
+            />
+          </label>
           
           <Button onClick={() => setShowModal(true)} className="fleet-button-primary">
             <Plus className="w-4 h-4 mr-2" />
@@ -155,14 +183,14 @@ const VehiclesPage: React.FC = () => {
           <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
             <div className="w-4 h-4 bg-green-500 rounded-full"></div>
           </div>
-          <p className="text-2xl font-bold text-foreground">{vehicles.filter(v => v.status === 'active').length}</p>
+          <p className="text-2xl font-bold text-foreground">{vehicles.filter(v => v.statut === 'actif').length}</p>
           <p className="text-sm text-muted-foreground">En service</p>
         </div>
         <div className="fleet-card text-center">
           <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2">
             <div className="w-4 h-4 bg-orange-500 rounded-full"></div>
           </div>
-          <p className="text-2xl font-bold text-foreground">{vehicles.filter(v => v.status === 'maintenance').length}</p>
+          <p className="text-2xl font-bold text-foreground">{vehicles.filter(v => v.statut === 'maintenance').length}</p>
           <p className="text-sm text-muted-foreground">En maintenance</p>
         </div>
         <div className="fleet-card text-center">

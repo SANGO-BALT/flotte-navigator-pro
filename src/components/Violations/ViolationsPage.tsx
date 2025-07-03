@@ -1,8 +1,11 @@
 
-import React, { useState } from 'react';
-import { Search, Plus, AlertTriangle, Calendar, Eye, Edit, Trash, Printer } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Plus, AlertTriangle, Calendar, Eye, Edit, Trash, Printer, Download, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/hooks/use-toast';
+import { FleetDatabase } from '@/services/fleetDatabase';
+import { Violation } from '@/types/fleet';
 import ViolationModal from './ViolationModal';
 import ViolationPrintModal from './ViolationPrintModal';
 
@@ -11,64 +14,32 @@ const ViolationsPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [showModal, setShowModal] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
-  const [selectedViolation, setSelectedViolation] = useState(null);
-  const [editingViolation, setEditingViolation] = useState(null);
+  const [selectedViolation, setSelectedViolation] = useState<Violation | null>(null);
+  const [editingViolation, setEditingViolation] = useState<Violation | null>(null);
+  const [violations, setViolations] = useState<Violation[]>([]);
 
-  const [violations, setViolations] = useState([
-    {
-      id: '1',
-      vehiclePlate: 'AB-123-CD',
-      vehicleBrand: 'Peugeot 308',
-      type: 'excès-vitesse',
-      date: '2024-06-15',
-      location: 'Boulevard Triomphal, Libreville',
-      amount: 75000,
-      status: 'en-attente',
-      description: 'Excès de vitesse de 15 km/h au-dessus de la limite autorisée',
-      driverName: 'Jean Dupont',
-      referenceNumber: 'CV2024001',
-    },
-    {
-      id: '2',
-      vehiclePlate: 'EF-456-GH',
-      vehicleBrand: 'Renault Trafic',
-      type: 'stationnement',
-      date: '2024-06-20',
-      location: 'Centre-ville, Port-Gentil',
-      amount: 25000,
-      status: 'payée',
-      description: 'Stationnement interdit zone bleue',
-      driverName: 'Marie Martin',
-      referenceNumber: 'CV2024002',
-    },
-    {
-      id: '3',
-      vehiclePlate: 'IJ-789-KL',
-      vehicleBrand: 'Yamaha MT-07',
-      type: 'feux-rouge',
-      date: '2024-06-25',
-      location: 'Carrefour Rond-Point, Libreville',
-      amount: 50000,
-      status: 'contestée',
-      description: 'Passage au feu rouge',
-      driverName: 'Pierre Durand',
-      referenceNumber: 'CV2024003',
-    },
-  ]);
+  useEffect(() => {
+    loadViolations();
+  }, []);
+
+  const loadViolations = () => {
+    const violationsList = FleetDatabase.getViolations();
+    setViolations(violationsList);
+  };
 
   const filteredViolations = violations.filter(violation => {
-    const matchesSearch = violation.vehiclePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         violation.driverName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         violation.location.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = violation.vehiculeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         violation.conducteur.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         violation.lieu.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = statusFilter === 'all' || violation.status === statusFilter;
+    const matchesStatus = statusFilter === 'all' || violation.statut === statusFilter;
     
     return matchesSearch && matchesStatus;
   });
 
-  const totalAmount = violations.reduce((sum, violation) => sum + violation.amount, 0);
-  const paidAmount = violations.filter(v => v.status === 'payée').reduce((sum, v) => sum + v.amount, 0);
-  const pendingAmount = violations.filter(v => v.status === 'en-attente').reduce((sum, v) => sum + v.amount, 0);
+  const totalAmount = violations.reduce((sum, violation) => sum + violation.montant, 0);
+  const paidAmount = violations.filter(v => v.statut === 'payée').reduce((sum, v) => sum + v.montant, 0);
+  const pendingAmount = violations.filter(v => v.statut === 'en-attente').reduce((sum, v) => sum + v.montant, 0);
 
   const statusColors = {
     'en-attente': 'bg-orange-100 text-orange-800',
@@ -87,49 +58,104 @@ const ViolationsPage: React.FC = () => {
   const typeLabels = {
     'excès-vitesse': 'Excès de vitesse',
     'stationnement': 'Stationnement',
-    'feux-rouge': 'Feux rouge',
+    'feu-rouge': 'Feu rouge',
     'téléphone': 'Téléphone au volant',
     'ceinture': 'Ceinture de sécurité',
     'autre': 'Autre',
   };
 
-  const handleView = (violation) => {
+  const handleView = (violation: Violation) => {
     setSelectedViolation(violation);
     setShowPrintModal(true);
   };
 
-  const handleEdit = (violation) => {
+  const handleEdit = (violation: Violation) => {
     setEditingViolation(violation);
     setShowModal(true);
   };
 
-  const handleDelete = (violationId) => {
+  const handleDelete = (violationId: string) => {
     if (confirm('Êtes-vous sûr de vouloir supprimer cette contravention ?')) {
-      setViolations(violations.filter(violation => violation.id !== violationId));
+      FleetDatabase.deleteViolation(violationId);
+      loadViolations();
+      toast({
+        title: "Contravention supprimée",
+        description: "La contravention a été supprimée avec succès.",
+      });
     }
   };
 
-  const handlePrint = (violation) => {
+  const handlePrint = (violation: Violation) => {
     setSelectedViolation(violation);
     setShowPrintModal(true);
   };
 
-  const handleSave = (violationData) => {
+  const handleSave = (violationData: Omit<Violation, 'id'>) => {
     if (editingViolation) {
-      setViolations(violations.map(violation => 
-        violation.id === editingViolation.id 
-          ? { ...violationData, id: editingViolation.id, referenceNumber: editingViolation.referenceNumber }
-          : violation
-      ));
+      FleetDatabase.updateViolation(editingViolation.id, violationData);
+      toast({
+        title: "Contravention modifiée",
+        description: "La contravention a été modifiée avec succès.",
+      });
     } else {
-      const newViolation = {
+      FleetDatabase.addViolation({
         ...violationData,
         id: Date.now().toString(),
-        referenceNumber: `CV${new Date().getFullYear()}${String(violations.length + 1).padStart(3, '0')}`,
-      };
-      setViolations([...violations, newViolation]);
+        numeroReference: `CV${new Date().getFullYear()}${String(violations.length + 1).padStart(3, '0')}`,
+      });
+      toast({
+        title: "Contravention ajoutée",
+        description: "La nouvelle contravention a été enregistrée avec succès.",
+      });
     }
+    loadViolations();
     setEditingViolation(null);
+  };
+
+  const handleExport = () => {
+    const dataStr = JSON.stringify(violations, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    const exportFileDefaultName = `contraventions_${new Date().toISOString().split('T')[0]}.json`;
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+    toast({
+      title: "Export réussi",
+      description: "Les contraventions ont été exportées avec succès.",
+    });
+  };
+
+  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const importedData = JSON.parse(e.target?.result as string);
+          if (Array.isArray(importedData)) {
+            importedData.forEach(violation => {
+              FleetDatabase.addViolation({
+                ...violation,
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+              });
+            });
+            loadViolations();
+            toast({
+              title: "Import réussi",
+              description: `${importedData.length} contraventions importées avec succès.`,
+            });
+          }
+        } catch (error) {
+          toast({
+            title: "Erreur d'import",
+            description: "Le fichier n'est pas au bon format.",
+            variant: "destructive",
+          });
+        }
+      };
+      reader.readAsText(file);
+    }
   };
 
   return (
@@ -199,12 +225,24 @@ const ViolationsPage: React.FC = () => {
             Contraventions ({filteredViolations.length})
           </h3>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={handleExport}>
+              <Download className="w-4 h-4 mr-2" />
               Exporter
             </Button>
-            <Button variant="outline" size="sm">
-              Statistiques
-            </Button>
+            <label className="cursor-pointer">
+              <Button variant="outline" size="sm" asChild>
+                <span>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Importer
+                </span>
+              </Button>
+              <input
+                type="file"
+                accept=".json"
+                onChange={handleImport}
+                className="hidden"
+              />
+            </label>
           </div>
         </div>
         
@@ -226,29 +264,26 @@ const ViolationsPage: React.FC = () => {
               {filteredViolations.map((violation) => (
                 <tr key={violation.id} className="border-b border-border hover:bg-muted/50">
                   <td className="py-3 px-4">
-                    <p className="font-mono text-sm text-foreground">{violation.referenceNumber}</p>
+                    <p className="font-mono text-sm text-foreground">{violation.numeroReference}</p>
                   </td>
                   <td className="py-3 px-4">
                     <p className="text-sm text-foreground">{new Date(violation.date).toLocaleDateString('fr-FR')}</p>
                   </td>
                   <td className="py-3 px-4">
-                    <div>
-                      <p className="font-medium text-foreground">{violation.vehiclePlate}</p>
-                      <p className="text-sm text-muted-foreground">{violation.vehicleBrand}</p>
-                    </div>
+                    <p className="font-medium text-foreground">{violation.vehiculeId}</p>
                   </td>
                   <td className="py-3 px-4">
-                    <p className="text-sm text-foreground">{violation.driverName}</p>
+                    <p className="text-sm text-foreground">{violation.conducteur}</p>
                   </td>
                   <td className="py-3 px-4">
-                    <p className="text-sm text-foreground">{typeLabels[violation.type]}</p>
+                    <p className="text-sm text-foreground">{typeLabels[violation.type] || violation.type}</p>
                   </td>
                   <td className="py-3 px-4">
-                    <p className="text-sm font-bold text-foreground">{violation.amount.toLocaleString()} FCFA</p>
+                    <p className="text-sm font-bold text-foreground">{violation.montant.toLocaleString()} FCFA</p>
                   </td>
                   <td className="py-3 px-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[violation.status]}`}>
-                      {statusLabels[violation.status]}
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[violation.statut]}`}>
+                      {statusLabels[violation.statut]}
                     </span>
                   </td>
                   <td className="py-3 px-4">

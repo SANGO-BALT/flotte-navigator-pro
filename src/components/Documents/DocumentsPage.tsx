@@ -1,67 +1,29 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, FileText, Download, Eye, Edit, Trash, Upload, Folder, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/hooks/use-toast';
+import { FleetDatabase } from '@/services/fleetDatabase';
+import { Document } from '@/types/fleet';
 import DocumentModal from './DocumentModal';
 
 const DocumentsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [showModal, setShowModal] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState(null);
-  const [editingDocument, setEditingDocument] = useState(null);
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+  const [editingDocument, setEditingDocument] = useState<Document | null>(null);
+  const [documents, setDocuments] = useState<Document[]>([]);
 
-  const [documents, setDocuments] = useState([
-    {
-      id: '1',
-      name: 'Carte grise AB-123-CD.pdf',
-      category: 'carte-grise',
-      vehiclePlate: 'AB-123-CD', 
-      uploadDate: '2024-06-15',
-      expiryDate: '2025-06-15',
-      size: '2.3 MB',
-      type: 'PDF',
-      status: 'valide',
-      description: 'Carte grise du véhicule Peugeot 308',
-    },
-    {
-      id: '2',
-      name: 'Assurance EF-456-GH.pdf',
-      category: 'assurance',
-      vehiclePlate: 'EF-456-GH',
-      uploadDate: '2024-06-10',
-      expiryDate: '2024-12-31',
-      size: '1.8 MB',
-      type: 'PDF',
-      status: 'bientot-expire',
-      description: 'Police d\'assurance véhicule',
-    },
-    {
-      id: '3',
-      name: 'Permis Jean Dupont.pdf',
-      category: 'permis',
-      vehiclePlate: '',
-      uploadDate: '2024-06-05',
-      expiryDate: '2026-03-20',
-      size: '1.2 MB',
-      type: 'PDF',
-      status: 'valide',
-      description: 'Permis de conduire Jean Dupont',
-    },
-    {
-      id: '4',
-      name: 'Visite technique AB-123-CD.pdf',
-      category: 'visite-technique',
-      vehiclePlate: 'AB-123-CD',
-      uploadDate: '2024-05-20',
-      expiryDate: '2024-11-20',
-      size: '0.9 MB',
-      type: 'PDF',
-      status: 'bientot-expire',
-      description: 'Certificat de visite technique',
-    },
-  ]);
+  useEffect(() => {
+    loadDocuments();
+  }, []);
+
+  const loadDocuments = () => {
+    const docs = FleetDatabase.getDocuments();
+    setDocuments(docs);
+  };
 
   const categories = [
     { value: 'all', label: 'Tous les documents' },
@@ -75,11 +37,11 @@ const DocumentsPage: React.FC = () => {
   ];
 
   const filteredDocuments = documents.filter(doc => {
-    const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         doc.vehiclePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = doc.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (doc.vehiculeId && doc.vehiculeId.toLowerCase().includes(searchTerm.toLowerCase())) ||
                          doc.description.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesCategory = categoryFilter === 'all' || doc.category === categoryFilter;
+    const matchesCategory = categoryFilter === 'all' || doc.type === categoryFilter;
     
     return matchesSearch && matchesCategory;
   });
@@ -106,44 +68,53 @@ const DocumentsPage: React.FC = () => {
     'autre': FileText,
   };
 
-  const handleView = (document) => {
-    alert(`Ouverture du document: ${document.name}`);
+  const handleView = (document: Document) => {
+    alert(`Ouverture du document: ${document.nom}`);
   };
 
-  const handleDownload = (document) => {
-    alert(`Téléchargement de: ${document.name}`);
+  const handleDownload = (document: Document) => {
+    alert(`Téléchargement de: ${document.nom}`);
   };
 
-  const handleEdit = (document) => {
+  const handleEdit = (document: Document) => {
     setEditingDocument(document);
     setShowModal(true);
   };
 
-  const handleDelete = (documentId) => {
+  const handleDelete = (documentId: string) => {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) {
-      setDocuments(documents.filter(doc => doc.id !== documentId));
+      FleetDatabase.deleteDocument(documentId);
+      loadDocuments();
+      toast({
+        title: "Document supprimé",
+        description: "Le document a été supprimé avec succès.",
+      });
     }
   };
 
-  const handleSave = (documentData) => {
+  const handleSave = (documentData: Omit<Document, 'id'>) => {
     if (editingDocument) {
-      setDocuments(documents.map(doc => 
-        doc.id === editingDocument.id 
-          ? { ...documentData, id: editingDocument.id }
-          : doc
-      ));
+      FleetDatabase.updateDocument(editingDocument.id, documentData);
+      toast({
+        title: "Document modifié",
+        description: "Le document a été modifié avec succès.",
+      });
     } else {
-      const newDocument = {
+      FleetDatabase.addDocument({
         ...documentData,
         id: Date.now().toString(),
-        uploadDate: new Date().toISOString().split('T')[0],
-      };
-      setDocuments([...documents, newDocument]);
+        dateCreation: new Date().toISOString().split('T')[0],
+      });
+      toast({
+        title: "Document ajouté",
+        description: "Le nouveau document a été enregistré avec succès.",
+      });
     }
+    loadDocuments();
     setEditingDocument(null);
   };
 
-  const getStatusFromDate = (expiryDate) => {
+  const getStatusFromDate = (expiryDate?: string) => {
     if (!expiryDate) return 'valide';
     const today = new Date();
     const expiry = new Date(expiryDate);
@@ -153,6 +124,52 @@ const DocumentsPage: React.FC = () => {
     if (diffDays < 0) return 'expire';
     if (diffDays <= 30) return 'bientot-expire';
     return 'valide';
+  };
+
+  const handleExport = () => {
+    const dataStr = JSON.stringify(documents, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    const exportFileDefaultName = `documents_${new Date().toISOString().split('T')[0]}.json`;
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+    toast({
+      title: "Export réussi",
+      description: "Les documents ont été exportés avec succès.",
+    });
+  };
+
+  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const importedData = JSON.parse(e.target?.result as string);
+          if (Array.isArray(importedData)) {
+            importedData.forEach(doc => {
+              FleetDatabase.addDocument({
+                ...doc,
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+              });
+            });
+            loadDocuments();
+            toast({
+              title: "Import réussi",
+              description: `${importedData.length} documents importés avec succès.`,
+            });
+          }
+        } catch (error) {
+          toast({
+            title: "Erreur d'import",
+            description: "Le fichier n'est pas au bon format.",
+            variant: "destructive",
+          });
+        }
+      };
+      reader.readAsText(file);
+    }
   };
 
   return (
@@ -197,7 +214,7 @@ const DocumentsPage: React.FC = () => {
             <div className="w-4 h-4 bg-green-500 rounded-full"></div>
           </div>
           <p className="text-2xl font-bold text-foreground">
-            {documents.filter(d => getStatusFromDate(d.expiryDate) === 'valide').length}
+            {documents.filter(d => getStatusFromDate(d.dateExpiration) === 'valide').length}
           </p>
           <p className="text-sm text-muted-foreground">Valides</p>
         </div>
@@ -206,7 +223,7 @@ const DocumentsPage: React.FC = () => {
             <div className="w-4 h-4 bg-orange-500 rounded-full"></div>
           </div>
           <p className="text-2xl font-bold text-foreground">
-            {documents.filter(d => getStatusFromDate(d.expiryDate) === 'bientot-expire').length}
+            {documents.filter(d => getStatusFromDate(d.dateExpiration) === 'bientot-expire').length}
           </p>
           <p className="text-sm text-muted-foreground">Bientôt expirés</p>
         </div>
@@ -215,7 +232,7 @@ const DocumentsPage: React.FC = () => {
             <div className="w-4 h-4 bg-red-500 rounded-full"></div>
           </div>
           <p className="text-2xl font-bold text-foreground">
-            {documents.filter(d => getStatusFromDate(d.expiryDate) === 'expire').length}
+            {documents.filter(d => getStatusFromDate(d.dateExpiration) === 'expire').length}
           </p>
           <p className="text-sm text-muted-foreground">Expirés</p>
         </div>
@@ -228,20 +245,31 @@ const DocumentsPage: React.FC = () => {
             Gestion Électronique des Documents ({filteredDocuments.length})
           </h3>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              <Upload className="w-4 h-4 mr-2" />
-              Import en lot
+            <Button variant="outline" size="sm" onClick={handleExport}>
+              <Download className="w-4 h-4 mr-2" />
+              Exporter
             </Button>
-            <Button variant="outline" size="sm">
-              Sauvegarder
-            </Button>
+            <label className="cursor-pointer">
+              <Button variant="outline" size="sm" asChild>
+                <span>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Importer
+                </span>
+              </Button>
+              <input
+                type="file"
+                accept=".json"
+                onChange={handleImport}
+                className="hidden"
+              />
+            </label>
           </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredDocuments.map((document) => {
-            const IconComponent = categoryIcons[document.category] || FileText;
-            const currentStatus = getStatusFromDate(document.expiryDate);
+            const IconComponent = categoryIcons[document.type] || FileText;
+            const currentStatus = getStatusFromDate(document.dateExpiration);
             
             return (
               <div key={document.id} className="border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
@@ -251,8 +279,8 @@ const DocumentsPage: React.FC = () => {
                       <IconComponent className="w-5 h-5 text-blue-600" />
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-medium text-foreground text-sm">{document.name}</h4>
-                      <p className="text-xs text-muted-foreground">{document.type} • {document.size}</p>
+                      <h4 className="font-medium text-foreground text-sm">{document.nom}</h4>
+                      <p className="text-xs text-muted-foreground">{document.type} • {document.taille}</p>
                     </div>
                   </div>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[currentStatus]}`}>
@@ -261,16 +289,16 @@ const DocumentsPage: React.FC = () => {
                 </div>
                 
                 <div className="space-y-2 mb-4">
-                  {document.vehiclePlate && (
+                  {document.vehiculeId && (
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground">Véhicule:</span>
-                      <span className="text-xs font-mono font-medium text-foreground">{document.vehiclePlate}</span>
+                      <span className="text-xs font-mono font-medium text-foreground">{document.vehiculeId}</span>
                     </div>
                   )}
                   <div className="flex items-center gap-2">
                     <Calendar className="w-3 h-3 text-muted-foreground" />
                     <span className="text-xs text-muted-foreground">
-                      Expire: {document.expiryDate ? new Date(document.expiryDate).toLocaleDateString('fr-FR') : 'N/A'}
+                      Expire: {document.dateExpiration ? new Date(document.dateExpiration).toLocaleDateString('fr-FR') : 'N/A'}
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground">{document.description}</p>
@@ -292,7 +320,7 @@ const DocumentsPage: React.FC = () => {
                     </Button>
                   </div>
                   <span className="text-xs text-muted-foreground">
-                    {new Date(document.uploadDate).toLocaleDateString('fr-FR')}
+                    {document.dateCreation ? new Date(document.dateCreation).toLocaleDateString('fr-FR') : ''}
                   </span>
                 </div>
               </div>

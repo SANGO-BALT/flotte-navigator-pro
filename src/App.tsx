@@ -1,31 +1,64 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "@/components/Settings/ThemeProvider";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ThemeProvider } from '@/components/Settings/ThemeProvider';
+import { Toaster } from '@/components/ui/sonner';
+import Layout from '@/components/Layout/Header';
+import Dashboard from '@/components/Dashboard/Dashboard';
+import VehiclesPage from '@/components/Vehicles/VehiclesPage';
+import UsersPage from '@/components/Users/UsersPage';
+import FuelPage from '@/components/Fuel/FuelPage';
+import MaintenancePage from '@/components/Maintenance/MaintenancePage';
+import ViolationsPage from '@/components/Violations/ViolationsPage';
+import GPSPage from '@/components/GPS/GPSPage';
+import DocumentsPage from '@/components/Documents/DocumentsPage';
+import ReportsPage from '@/components/Reports/ReportsPage';
+import TravegabPage from '@/components/Travegab/TravegabPage';
+import UserManagementPage from '@/components/UserManagement/UserManagementPage';
+import SettingsPage from '@/components/Settings/SettingsPage';
+import LoginPage from '@/components/Auth/LoginPage';
+import NotFound from '@/pages/NotFound';
+import { FleetDatabase } from '@/services/fleetDatabase';
+import './App.css';
 
-const queryClient = new QueryClient();
+function App() {
+  useEffect(() => {
+    // Initialiser la base de données au démarrage de l'application
+    FleetDatabase.initializeDatabase();
+    console.log('Base de données Fleet initialisée avec succès');
+  }, []);
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+  return (
+    <ThemeProvider defaultTheme="light" storageKey="fleet-theme">
+      <Router>
+        <div className="min-h-screen bg-background">
           <Routes>
-            <Route path="/" element={<Index />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/*" element={
+              <Layout>
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/vehicles" element={<VehiclesPage />} />
+                  <Route path="/users" element={<UsersPage />} />
+                  <Route path="/fuel" element={<FuelPage />} />
+                  <Route path="/maintenance" element={<MaintenancePage />} />
+                  <Route path="/violations" element={<ViolationsPage />} />
+                  <Route path="/gps" element={<GPSPage />} />
+                  <Route path="/documents" element={<DocumentsPage />} />
+                  <Route path="/reports" element={<ReportsPage />} />
+                  <Route path="/travegab" element={<TravegabPage />} />
+                  <Route path="/user-management" element={<UserManagementPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Layout>
+            } />
           </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+          <Toaster />
+        </div>
+      </Router>
     </ThemeProvider>
-  </QueryClientProvider>
-);
+  );
+}
 
 export default App;

@@ -1,8 +1,11 @@
 
-import React, { useState } from 'react';
-import { Search, Plus, Fuel, TrendingUp, Calendar, Eye, Edit, Trash, Printer } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Plus, Fuel, TrendingUp, Calendar, Eye, Edit, Trash, Printer, Download, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/hooks/use-toast';
+import { FleetDatabase } from '@/services/fleetDatabase';
+import { FuelRecord } from '@/types/fleet';
 import FuelModal from './FuelModal';
 import FuelTicketModal from './FuelTicketModal';
 
@@ -10,47 +13,18 @@ const FuelPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showTicketModal, setShowTicketModal] = useState(false);
-  const [selectedRecord, setSelectedRecord] = useState(null);
-  const [editingRecord, setEditingRecord] = useState(null);
+  const [selectedRecord, setSelectedRecord] = useState<FuelRecord | null>(null);
+  const [editingRecord, setEditingRecord] = useState<FuelRecord | null>(null);
+  const [fuelRecords, setFuelRecords] = useState<FuelRecord[]>([]);
 
-  const [fuelRecords, setFuelRecords] = useState([
-    {
-      id: '1',
-      vehiclePlate: 'AB-123-CD',
-      vehicleBrand: 'Peugeot 308',
-      date: '2024-07-01',
-      fuelType: 'Diesel',
-      quantity: 45,
-      unitPrice: 650,
-      totalCost: 29250,
-      station: 'Total Station Centre',
-      mileage: 85340,
-    },
-    {
-      id: '2',
-      vehiclePlate: 'EF-456-GH',
-      vehicleBrand: 'Renault Trafic',
-      date: '2024-06-30',
-      fuelType: 'Diesel',
-      quantity: 65,
-      unitPrice: 640,
-      totalCost: 41600,
-      station: 'Shell Autoroute',
-      mileage: 120450,
-    },
-    {
-      id: '3',
-      vehiclePlate: 'IJ-789-KL',
-      vehicleBrand: 'Yamaha MT-07',
-      date: '2024-06-29',
-      fuelType: 'Essence',
-      quantity: 15,
-      unitPrice: 750,
-      totalCost: 11250,
-      station: 'Esso Centre Ville',
-      mileage: 45120,
-    },
-  ]);
+  useEffect(() => {
+    loadFuelRecords();
+  }, []);
+
+  const loadFuelRecords = () => {
+    const records = FleetDatabase.getFuelRecords();
+    setFuelRecords(records);
+  };
 
   const filteredRecords = fuelRecords.filter(record =>
     record.vehiclePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -60,44 +34,99 @@ const FuelPage: React.FC = () => {
 
   const totalCost = fuelRecords.reduce((sum, record) => sum + record.totalCost, 0);
   const totalQuantity = fuelRecords.reduce((sum, record) => sum + record.quantity, 0);
-  const averagePrice = totalCost / totalQuantity;
+  const averagePrice = totalQuantity > 0 ? totalCost / totalQuantity : 0;
 
-  const handleView = (record) => {
+  const handleView = (record: FuelRecord) => {
     setSelectedRecord(record);
     setShowTicketModal(true);
   };
 
-  const handleEdit = (record) => {
+  const handleEdit = (record: FuelRecord) => {
     setEditingRecord(record);
     setShowModal(true);
   };
 
-  const handleDelete = (recordId) => {
+  const handleDelete = (recordId: string) => {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce plein ?')) {
-      setFuelRecords(fuelRecords.filter(record => record.id !== recordId));
+      FleetDatabase.deleteFuelRecord(recordId);
+      loadFuelRecords();
+      toast({
+        title: "Plein supprimé",
+        description: "Le plein a été supprimé avec succès.",
+      });
     }
   };
 
-  const handlePrintTicket = (record) => {
+  const handlePrintTicket = (record: FuelRecord) => {
     setSelectedRecord(record);
     setShowTicketModal(true);
   };
 
-  const handleSave = (recordData) => {
+  const handleSave = (recordData: Omit<FuelRecord, 'id'>) => {
     if (editingRecord) {
-      setFuelRecords(fuelRecords.map(record => 
-        record.id === editingRecord.id 
-          ? { ...recordData, id: editingRecord.id }
-          : record
-      ));
+      FleetDatabase.updateFuelRecord(editingRecord.id, recordData);
+      toast({
+        title: "Plein modifié",
+        description: "Le plein a été modifié avec succès.",
+      });
     } else {
-      const newRecord = {
+      FleetDatabase.addFuelRecord({
         ...recordData,
         id: Date.now().toString(),
-      };
-      setFuelRecords([...fuelRecords, newRecord]);
+      });
+      toast({
+        title: "Plein ajouté",
+        description: "Le nouveau plein a été enregistré avec succès.",
+      });
     }
+    loadFuelRecords();
     setEditingRecord(null);
+  };
+
+  const handleExport = () => {
+    const dataStr = JSON.stringify(fuelRecords, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    const exportFileDefaultName = `pleins_${new Date().toISOString().split('T')[0]}.json`;
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+    toast({
+      title: "Export réussi",
+      description: "Les données ont été exportées avec succès.",
+    });
+  };
+
+  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const importedData = JSON.parse(e.target?.result as string);
+          if (Array.isArray(importedData)) {
+            importedData.forEach(record => {
+              FleetDatabase.addFuelRecord({
+                ...record,
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+              });
+            });
+            loadFuelRecords();
+            toast({
+              title: "Import réussi",
+              description: `${importedData.length} pleins importés avec succès.`,
+            });
+          }
+        } catch (error) {
+          toast({
+            title: "Erreur d'import",
+            description: "Le fichier n'est pas au bon format.",
+            variant: "destructive",
+          });
+        }
+      };
+      reader.readAsText(file);
+    }
   };
 
   return (
@@ -151,12 +180,24 @@ const FuelPage: React.FC = () => {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-foreground">Historique des pleins</h3>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={handleExport}>
+              <Download className="w-4 h-4 mr-2" />
               Exporter
             </Button>
-            <Button variant="outline" size="sm">
-              Filtrer par date
-            </Button>
+            <label className="cursor-pointer">
+              <Button variant="outline" size="sm" asChild>
+                <span>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Importer
+                </span>
+              </Button>
+              <input
+                type="file"
+                accept=".json"
+                onChange={handleImport}
+                className="hidden"
+              />
+            </label>
           </div>
         </div>
         
@@ -188,7 +229,7 @@ const FuelPage: React.FC = () => {
                   </td>
                   <td className="py-3 px-4">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      record.fuelType === 'Diesel' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                      record.fuelType === 'diesel' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
                     }`}>
                       {record.fuelType}
                     </span>
