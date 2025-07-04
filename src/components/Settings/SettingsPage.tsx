@@ -1,493 +1,488 @@
 import React, { useState } from 'react';
-import { Settings, User, Bell, Shield, Palette, Globe, Database, Upload, Image } from 'lucide-react';
+import { Settings, Palette, Bell, Shield, List, Zap, MapPin, Database, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useTheme } from './ThemeProvider';
 import { toast } from 'sonner';
+
+interface SettingsData {
+  theme: 'light' | 'dark' | 'system';
+  language: string;
+  notificationsEnabled: boolean;
+  securityUpdatesEnabled: boolean;
+  // Configuration Google Maps APIs
+  googleMapsApiKey: string;
+  enableRouteOptimization: boolean;
+  enableDistanceMatrix: boolean;
+  enableSnapToRoads: boolean;
+  defaultTravelMode: 'DRIVING' | 'WALKING' | 'BICYCLING' | 'TRANSIT';
+  avoidHighways: boolean;
+  avoidTolls: boolean;
+  fuelConsumptionRate: number; // L/100km
+  fuelPrice: number; // FCFA/L
+}
 
 const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('general');
-  const { theme, setTheme } = useTheme();
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoPreview, setLogoPreview] = useState<string>('');
-  
-  const [settings, setSettings] = useState({
-    // Paramètres généraux
-    companyName: 'Système de Gestion de Flotte',
-    companyAddress: 'Libreville, Gabon',
-    companyPhone: '+241 01 23 45 67',
-    companyEmail: 'contact@fleet.ga',
-    companyLogo: '',
-    
-    // Notifications
-    emailNotifications: true,
-    maintenanceAlerts: true,
-    fuelAlerts: true,
-    violationAlerts: true,
-    
-    // Sécurité
-    sessionTimeout: '60',
-    passwordExpiry: '90',
-    twoFactorAuth: false,
-    
-    // Personnalisation
-    primaryColor: '#3b82f6',
+  const [settings, setSettings] = useState<SettingsData>({
+    theme: 'system',
     language: 'fr',
-    currency: 'FCFA',
-    
-    // Système
-    autoBackup: true,
-    backupFrequency: 'daily',
-    maintenanceMode: false,
-    
-    // Listes système
-    vehicleTypes: ['Voiture', 'Camion', 'Bus', 'Moto', 'Utilitaire'],
-    fuelTypes: ['Essence', 'Diesel', 'Hybride', 'Électrique'],
-    maintenanceTypes: ['Préventive', 'Corrective', 'Révision', 'Réparation'],
-    violationTypes: ['Excès de vitesse', 'Stationnement', 'Feu rouge', 'Alcool', 'Téléphone'],
-    userRoles: ['Administrateur', 'Gestionnaire', 'Conducteur', 'Mécanicien'],
-    departments: ['Transport', 'Administration', 'Maintenance', 'Commercial']
+    notificationsEnabled: true,
+    securityUpdatesEnabled: true,
+    // Configuration Google Maps APIs
+    googleMapsApiKey: '',
+    enableRouteOptimization: true,
+    enableDistanceMatrix: true,
+    enableSnapToRoads: true,
+    defaultTravelMode: 'DRIVING',
+    avoidHighways: false,
+    avoidTolls: false,
+    fuelConsumptionRate: 8, // L/100km
+    fuelPrice: 650, // FCFA/L
   });
 
-  const tabs = [
-    { id: 'general', label: 'Général', icon: Settings },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'security', label: 'Sécurité', icon: Shield },
-    { id: 'appearance', label: 'Apparence', icon: Palette },
-    { id: 'lists', label: 'Listes système', icon: Database },
-    { id: 'system', label: 'Système', icon: Database },
-  ];
-
-  const handleSettingChange = (key: string, value: any) => {
-    setSettings(prev => ({
-      ...prev,
-      [key]: value
-    }));
-  };
-
-  const handleListItemAdd = (listKey: string, newItem: string) => {
-    if (newItem.trim()) {
-      const currentList = settings[listKey] as string[];
-      handleSettingChange(listKey, [...currentList, newItem.trim()]);
-    }
-  };
-
-  const handleListItemRemove = (listKey: string, index: number) => {
-    const currentList = settings[listKey] as string[];
-    handleSettingChange(listKey, currentList.filter((_, i) => i !== index));
-  };
-
-  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB max
-        toast.error('Le fichier est trop volumineux (max 5MB)');
-        return;
-      }
-      
-      if (!file.type.startsWith('image/')) {
-        toast.error('Veuillez sélectionner un fichier image');
-        return;
-      }
-      
-      setLogoFile(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setLogoPreview(result);
-        handleSettingChange('companyLogo', result);
-      };
-      reader.readAsDataURL(file);
-      toast.success('Logo téléchargé avec succès');
-    }
-  };
-
   const handleSave = () => {
-    // Sauvegarder dans localStorage
-    localStorage.setItem('fleet_settings', JSON.stringify(settings));
-    toast.success('Paramètres sauvegardés avec succès!');
+    toast.success('Paramètres enregistrés avec succès!');
+    console.log('Paramètres enregistrés:', settings);
   };
 
-  const handleReset = () => {
-    if (confirm('Êtes-vous sûr de vouloir restaurer les paramètres par défaut ?')) {
-      localStorage.removeItem('fleet_settings');
-      toast.success('Paramètres restaurés aux valeurs par défaut');
-      window.location.reload();
+  const handleGoogleMapsTest = async () => {
+    if (!settings.googleMapsApiKey) {
+      toast.error('Veuillez d\'abord saisir votre clé API Google Maps');
+      return;
+    }
+
+    try {
+      // Test simple de l'API
+      const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=Libreville,Gabon&key=${settings.googleMapsApiKey}`);
+      const data = await response.json();
+      
+      if (data.status === 'OK') {
+        toast.success('Configuration Google Maps testée avec succès!');
+      } else {
+        toast.error(`Erreur de configuration: ${data.status}`);
+      }
+    } catch (error) {
+      toast.error('Erreur lors du test de l\'API Google Maps');
     }
   };
-
-  const renderGeneralSettings = () => (
-    <div className="space-y-8">
-      <div>
-        <h3 className="text-xl font-medium text-foreground mb-6">Logo de l'entreprise</h3>
-        <div className="flex items-center space-x-6">
-          <div className="w-24 h-24 border-2 border-dashed border-border rounded-lg flex items-center justify-center bg-muted/30">
-            {logoPreview ? (
-              <img src={logoPreview} alt="Logo" className="w-full h-full object-contain rounded-lg" />
-            ) : (
-              <Image className="w-8 h-8 text-muted-foreground" />
-            )}
-          </div>
-          <div>
-            <Button 
-              onClick={() => document.getElementById('logo-upload')?.click()}
-              variant="outline"
-              className="mb-2"
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              Télécharger un logo
-            </Button>
-            <input
-              id="logo-upload"
-              type="file"
-              accept="image/*"
-              onChange={handleLogoUpload}
-              className="hidden"
-            />
-            <p className="text-sm text-muted-foreground">PNG, JPG jusqu'à 5MB</p>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <h3 className="text-xl font-medium text-foreground mb-6">Informations de l'entreprise</h3>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Nom de l'entreprise
-            </label>
-            <Input
-              value={settings.companyName}
-              onChange={(e) => handleSettingChange('companyName', e.target.value)}
-              className="text-base py-3"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Adresse
-            </label>
-            <Input
-              value={settings.companyAddress}
-              onChange={(e) => handleSettingChange('companyAddress', e.target.value)}
-              className="text-base py-3"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Téléphone
-            </label>
-            <Input
-              value={settings.companyPhone}
-              onChange={(e) => handleSettingChange('companyPhone', e.target.value)}
-              className="text-base py-3"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Email
-            </label>
-            <Input
-              type="email"
-              value={settings.companyEmail}
-              onChange={(e) => handleSettingChange('companyEmail', e.target.value)}
-              className="text-base py-3"
-            />
-          </div>
-        </div>
-      </div>
-      
-      <div>
-        <h3 className="text-xl font-medium text-foreground mb-6">Préférences régionales</h3>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Langue
-            </label>
-            <select
-              value={settings.language}
-              onChange={(e) => handleSettingChange('language', e.target.value)}
-              className="w-full px-4 py-3 text-base border border-border rounded-lg bg-background text-foreground"
-            >
-              <option value="fr">Français</option>
-              <option value="en">English</option>
-              <option value="es">Español</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Devise
-            </label>
-            <select
-              value={settings.currency}
-              onChange={(e) => handleSettingChange('currency', e.target.value)}
-              className="w-full px-4 py-3 text-base border border-border rounded-lg bg-background text-foreground"
-            >
-              <option value="FCFA">FCFA (Franc CFA)</option>
-              <option value="EUR">Euro (€)</option>
-              <option value="USD">Dollar US ($)</option>
-              <option value="CAD">Dollar Canadien (CAD)</option>
-            </select>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderListSettings = () => (
-    <div className="space-y-8">
-      <h3 className="text-xl font-medium text-foreground mb-6">Configuration des listes système</h3>
-      
-      {Object.entries({
-        vehicleTypes: 'Types de véhicules',
-        fuelTypes: 'Types de carburant',
-        maintenanceTypes: 'Types de maintenance',
-        violationTypes: 'Types de contraventions',
-        userRoles: 'Rôles utilisateurs',
-        departments: 'Départements'
-      }).map(([key, label]) => (
-        <div key={key} className="space-y-4">
-          <h4 className="text-lg font-medium text-foreground">{label}</h4>
-          <div className="space-y-3">
-            {(settings[key] as string[]).map((item, index) => (
-              <div key={index} className="flex items-center gap-3">
-                <Input
-                  value={item}
-                  onChange={(e) => {
-                    const newList = [...(settings[key] as string[])];
-                    newList[index] = e.target.value;
-                    handleSettingChange(key, newList);
-                  }}
-                  className="flex-1 text-base py-3"
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleListItemRemove(key, index)}
-                  className="text-red-600 hover:text-red-700"
-                >
-                  Supprimer
-                </Button>
-              </div>
-            ))}
-            <Button
-              variant="outline"
-              onClick={() => {
-                const newItem = prompt(`Ajouter un nouveau ${label.toLowerCase()}:`);
-                if (newItem) handleListItemAdd(key, newItem);
-              }}
-              className="w-full text-base py-3"
-            >
-              + Ajouter un élément
-            </Button>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-
-  const renderNotificationSettings = () => (
-    <div className="space-y-8">
-      <h3 className="text-xl font-medium text-foreground mb-6">Préférences de notification</h3>
-      <div className="space-y-6">
-        {[
-          { key: 'emailNotifications', label: 'Notifications par email', desc: 'Recevoir les alertes par email' },
-          { key: 'maintenanceAlerts', label: 'Alertes de maintenance', desc: 'Notifications pour les maintenances dues' },
-          { key: 'fuelAlerts', label: 'Alertes de carburant', desc: 'Alertes de consommation élevée' },
-          { key: 'violationAlerts', label: 'Alertes de contravention', desc: 'Notifications des infractions' },
-        ].map(notification => (
-          <div key={notification.key} className="flex items-center justify-between p-4 border border-border rounded-lg">
-            <div>
-              <label className="text-base font-medium text-foreground">{notification.label}</label>
-              <p className="text-sm text-muted-foreground">{notification.desc}</p>
-            </div>
-            <input
-              type="checkbox"
-              checked={settings[notification.key]}
-              onChange={(e) => handleSettingChange(notification.key, e.target.checked)}
-              className="w-5 h-5 rounded"
-            />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  const renderSecuritySettings = () => (
-    <div className="space-y-8">
-      <h3 className="text-xl font-medium text-foreground mb-6">Paramètres de sécurité</h3>
-      <div className="space-y-6">
-        <div>
-          <label className="block text-base font-medium text-foreground mb-3">
-            Durée de session (minutes)
-          </label>
-          <Input
-            type="number"
-            value={settings.sessionTimeout}
-            onChange={(e) => handleSettingChange('sessionTimeout', e.target.value)}
-            className="text-base py-3"
-          />
-        </div>
-        <div>
-          <label className="block text-base font-medium text-foreground mb-3">
-            Expiration mot de passe (jours)
-          </label>
-          <Input
-            type="number"
-            value={settings.passwordExpiry}
-            onChange={(e) => handleSettingChange('passwordExpiry', e.target.value)}
-            className="text-base py-3"
-          />
-        </div>
-        <div className="flex items-center justify-between p-4 border border-border rounded-lg">
-          <div>
-            <label className="text-base font-medium text-foreground">Authentification à deux facteurs</label>
-            <p className="text-sm text-muted-foreground">Sécurité renforcée pour la connexion</p>
-          </div>
-          <input
-            type="checkbox"
-            checked={settings.twoFactorAuth}
-            onChange={(e) => handleSettingChange('twoFactorAuth', e.target.checked)}
-            className="w-5 h-5 rounded"
-          />
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderAppearanceSettings = () => (
-    <div className="space-y-8">
-      <h3 className="text-xl font-medium text-foreground mb-6">Personnalisation</h3>
-      <div className="space-y-6">
-        <div>
-          <label className="block text-base font-medium text-foreground mb-3">
-            Thème de l'application
-          </label>
-          <select
-            value={theme}
-            onChange={(e) => setTheme(e.target.value as 'light' | 'dark' | 'system')}
-            className="w-full px-4 py-3 text-base border border-border rounded-lg bg-background text-foreground"
-          >
-            <option value="light">Clair</option>
-            <option value="dark">Sombre</option>
-            <option value="system">Système (automatique)</option>
-          </select>
-          <p className="text-sm text-muted-foreground mt-2">
-            Le thème système s'adapte automatiquement aux préférences de votre appareil
-          </p>
-        </div>
-        
-        <div>
-          <label className="block text-base font-medium text-foreground mb-3">
-            Couleur principale
-          </label>
-          <div className="flex items-center space-x-4">
-            <input
-              type="color"
-              value={settings.primaryColor}
-              onChange={(e) => handleSettingChange('primaryColor', e.target.value)}
-              className="w-16 h-12 rounded border border-border cursor-pointer"
-            />
-            <Input
-              value={settings.primaryColor}
-              onChange={(e) => handleSettingChange('primaryColor', e.target.value)}
-              className="flex-1 text-base py-3"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderSystemSettings = () => (
-    <div className="space-y-8">
-      <h3 className="text-xl font-medium text-foreground mb-6">Paramètres système</h3>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between p-4 border border-border rounded-lg">
-          <div>
-            <label className="text-base font-medium text-foreground">Sauvegarde automatique</label>
-            <p className="text-sm text-muted-foreground">Sauvegarde automatique des données</p>
-          </div>
-          <input
-            type="checkbox"
-            checked={settings.autoBackup}
-            onChange={(e) => handleSettingChange('autoBackup', e.target.checked)}
-            className="w-5 h-5 rounded"
-          />
-        </div>
-        <div>
-          <label className="block text-base font-medium text-foreground mb-3">
-            Fréquence de sauvegarde
-          </label>
-          <select
-            value={settings.backupFrequency}
-            onChange={(e) => handleSettingChange('backupFrequency', e.target.value)}
-            className="w-full px-4 py-3 text-base border border-border rounded-lg bg-background text-foreground"
-          >
-            <option value="hourly">Chaque heure</option>
-            <option value="daily">Quotidienne</option>
-            <option value="weekly">Hebdomadaire</option>
-            <option value="monthly">Mensuelle</option>
-          </select>
-        </div>
-        <div className="flex items-center justify-between p-4 border border-border rounded-lg">
-          <div>
-            <label className="text-base font-medium text-foreground">Mode maintenance</label>
-            <p className="text-sm text-muted-foreground">Désactiver l'accès pendant la maintenance</p>
-          </div>
-          <input
-            type="checkbox"
-            checked={settings.maintenanceMode}
-            onChange={(e) => handleSettingChange('maintenanceMode', e.target.checked)}
-            className="w-5 h-5 rounded"
-          />
-        </div>
-      </div>
-    </div>
-  );
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <div className="flex flex-col xl:flex-row gap-8">
-        {/* Navigation des onglets */}
-        <div className="xl:w-80">
-          <div className="fleet-card p-6">
-            <h2 className="text-2xl font-semibold text-foreground mb-6">Paramètres</h2>
-            <nav className="space-y-3">
-              {tabs.map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center space-x-4 px-4 py-3 rounded-lg text-left transition-colors text-base ${
-                    activeTab === tab.id 
-                      ? 'bg-primary/10 text-primary border border-primary/20' 
-                      : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                  }`}
-                >
-                  <tab.icon className="w-5 h-5" />
-                  <span>{tab.label}</span>
-                </button>
-              ))}
-            </nav>
-          </div>
+    <div className="p-12 max-w-8xl mx-auto min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
+      <div className="flex flex-col lg:flex-row gap-12">
+        {/* Sidebar - Interface élargie */}
+        <div className="lg:w-80">
+          <h2 className="text-4xl font-bold text-foreground mb-8">Paramètres</h2>
+          <nav className="space-y-3">
+            {[
+              { id: 'general', label: 'Général', icon: Settings },
+              { id: 'appearance', label: 'Apparence', icon: Palette },
+              { id: 'notifications', label: 'Notifications', icon: Bell },
+              { id: 'security', label: 'Sécurité', icon: Shield },
+              { id: 'lists', label: 'Listes du système', icon: List },
+              { id: 'integrations', label: 'Intégrations', icon: Zap },
+              { id: 'googlemaps', label: 'Google Maps APIs', icon: MapPin },
+              { id: 'backup', label: 'Sauvegarde', icon: Database },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`w-full flex items-center gap-4 px-6 py-4 text-left rounded-lg transition-colors text-lg ${
+                  activeTab === tab.id
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                }`}
+              >
+                <tab.icon className="w-6 h-6" />
+                {tab.label}
+              </button>
+            ))}
+          </nav>
         </div>
 
-        {/* Contenu des paramètres */}
+        {/* Main Content - Interface élargie */}
         <div className="flex-1">
-          <div className="fleet-card p-8">
-            {activeTab === 'general' && renderGeneralSettings()}
-            {activeTab === 'notifications' && renderNotificationSettings()}
-            {activeTab === 'security' && renderSecuritySettings()}
-            {activeTab === 'appearance' && renderAppearanceSettings()}
-            {activeTab === 'lists' && renderListSettings()}
-            {activeTab === 'system' && renderSystemSettings()}
+          <div className="fleet-card p-10">
+            {activeTab === 'general' && (
+              <div>
+                <div className="flex items-center gap-4 mb-8">
+                  <Settings className="w-10 h-10 text-blue-600" />
+                  <div>
+                    <h3 className="text-3xl font-semibold text-foreground">Paramètres Généraux</h3>
+                    <p className="text-lg text-muted-foreground">Configuration de base du système</p>
+                  </div>
+                </div>
 
-            {/* Boutons d'action */}
-            <div className="flex justify-end space-x-4 mt-12 pt-8 border-t border-border">
-              <Button variant="outline" onClick={handleReset} className="text-base py-3 px-6">
-                Restaurer par défaut
-              </Button>
-              <Button onClick={handleSave} className="fleet-button-primary text-base py-3 px-6">
-                Sauvegarder les modifications
+                <div className="space-y-8">
+                  <div>
+                    <label className="block text-lg font-medium text-foreground mb-3">
+                      Thème
+                    </label>
+                    <select
+                      value={settings.theme}
+                      onChange={(e) => setSettings(prev => ({ ...prev, theme: e.target.value as 'light' | 'dark' | 'system' }))}
+                      className="w-full px-4 py-3 text-lg border border-border rounded-lg bg-background text-foreground"
+                    >
+                      <option value="light">Clair</option>
+                      <option value="dark">Sombre</option>
+                      <option value="system">Système</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-lg font-medium text-foreground mb-3">
+                      Langue
+                    </label>
+                    <select
+                      value={settings.language}
+                      onChange={(e) => setSettings(prev => ({ ...prev, language: e.target.value }))}
+                      className="w-full px-4 py-3 text-lg border border-border rounded-lg bg-background text-foreground"
+                    >
+                      <option value="fr">Français</option>
+                      <option value="en">Anglais</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'appearance' && (
+              <div>
+                <div className="flex items-center gap-4 mb-8">
+                  <Palette className="w-10 h-10 text-purple-600" />
+                  <div>
+                    <h3 className="text-3xl font-semibold text-foreground">Apparence</h3>
+                    <p className="text-lg text-muted-foreground">Personnalisation de l'interface</p>
+                  </div>
+                </div>
+
+                <div className="space-y-8">
+                  <p className="text-lg text-foreground">
+                    Fonctionnalité en cours de développement...
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'notifications' && (
+              <div>
+                <div className="flex items-center gap-4 mb-8">
+                  <Bell className="w-10 h-10 text-yellow-600" />
+                  <div>
+                    <h3 className="text-3xl font-semibold text-foreground">Notifications</h3>
+                    <p className="text-lg text-muted-foreground">Gestion des alertes et notifications</p>
+                  </div>
+                </div>
+
+                <div className="space-y-8">
+                  <div className="flex items-center justify-between">
+                    <label className="text-lg font-medium text-foreground">Activer les notifications</label>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={settings.notificationsEnabled}
+                        onChange={(e) => setSettings(prev => ({ ...prev, notificationsEnabled: e.target.checked }))}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'security' && (
+              <div>
+                <div className="flex items-center gap-4 mb-8">
+                  <Shield className="w-10 h-10 text-red-600" />
+                  <div>
+                    <h3 className="text-3xl font-semibold text-foreground">Sécurité</h3>
+                    <p className="text-lg text-muted-foreground">Paramètres de sécurité et confidentialité</p>
+                  </div>
+                </div>
+
+                <div className="space-y-8">
+                  <div className="flex items-center justify-between">
+                    <label className="text-lg font-medium text-foreground">Activer les mises à jour de sécurité</label>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={settings.securityUpdatesEnabled}
+                        onChange={(e) => setSettings(prev => ({ ...prev, securityUpdatesEnabled: e.target.checked }))}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'lists' && (
+              <div>
+                <div className="flex items-center gap-4 mb-8">
+                  <List className="w-10 h-10 text-gray-600" />
+                  <div>
+                    <h3 className="text-3xl font-semibold text-foreground">Listes du système</h3>
+                    <p className="text-lg text-muted-foreground">Gestion des listes de données du système</p>
+                  </div>
+                </div>
+
+                <div className="space-y-8">
+                  <p className="text-lg text-foreground">
+                    Fonctionnalité en cours de développement...
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'integrations' && (
+              <div>
+                <div className="flex items-center gap-4 mb-8">
+                  <Zap className="w-10 h-10 text-orange-600" />
+                  <div>
+                    <h3 className="text-3xl font-semibold text-foreground">Intégrations</h3>
+                    <p className="text-lg text-muted-foreground">Connexion avec d'autres services et applications</p>
+                  </div>
+                </div>
+
+                <div className="space-y-8">
+                  <p className="text-lg text-foreground">
+                    Fonctionnalité en cours de développement...
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'googlemaps' && (
+              <div>
+                <div className="flex items-center gap-4 mb-8">
+                  <MapPin className="w-10 h-10 text-blue-600" />
+                  <div>
+                    <h3 className="text-3xl font-semibold text-foreground">Google Maps APIs</h3>
+                    <p className="text-lg text-muted-foreground">Configuration des services de géolocalisation</p>
+                  </div>
+                </div>
+
+                <div className="space-y-8">
+                  {/* Configuration API */}
+                  <div className="p-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <h4 className="text-xl font-semibold text-foreground mb-4">Configuration de l'API</h4>
+                    <div className="space-y-6">
+                      <div>
+                        <label className="block text-lg font-medium text-foreground mb-3">
+                          Clé API Google Maps
+                        </label>
+                        <div className="flex gap-4">
+                          <Input
+                            type="password"
+                            placeholder="Saisissez votre clé API Google Maps"
+                            value={settings.googleMapsApiKey}
+                            onChange={(e) => setSettings(prev => ({ ...prev, googleMapsApiKey: e.target.value }))}
+                            className="flex-1 h-12 text-lg"
+                          />
+                          <Button onClick={handleGoogleMapsTest} variant="outline" className="h-12 px-6 text-lg">
+                            Tester
+                          </Button>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Obtenez votre clé API sur{' '}
+                          <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                            Google Cloud Console
+                          </a>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Services activés */}
+                  <div className="p-6 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <h4 className="text-xl font-semibold text-foreground mb-4">Services activés</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg">
+                        <div>
+                          <p className="font-medium text-foreground">Routes API</p>
+                          <p className="text-sm text-muted-foreground">Calcul d'itinéraires</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={settings.enableRouteOptimization}
+                            onChange={(e) => setSettings(prev => ({ ...prev, enableRouteOptimization: e.target.checked }))}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                        </label>
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg">
+                        <div>
+                          <p className="font-medium text-foreground">Distance Matrix</p>
+                          <p className="text-sm text-muted-foreground">Calcul de distances</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={settings.enableDistanceMatrix}
+                            onChange={(e) => setSettings(prev => ({ ...prev, enableDistanceMatrix: e.target.checked }))}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                        </label>
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg">
+                        <div>
+                          <p className="font-medium text-foreground">Snap to Roads</p>
+                          <p className="text-sm text-muted-foreground">Alignement routes</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={settings.enableSnapToRoads}
+                            onChange={(e) => setSettings(prev => ({ ...prev, enableSnapToRoads: e.target.checked }))}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Paramètres de trajet */}
+                  <div className="p-6 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                    <h4 className="text-xl font-semibold text-foreground mb-4">Paramètres de trajet</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-lg font-medium text-foreground mb-3">
+                          Mode de transport par défaut
+                        </label>
+                        <select
+                          value={settings.defaultTravelMode}
+                          onChange={(e) => setSettings(prev => ({ ...prev, defaultTravelMode: e.target.value as 'DRIVING' | 'WALKING' | 'BICYCLING' | 'TRANSIT' }))}
+                          className="w-full px-4 py-3 text-lg border border-border rounded-lg bg-background text-foreground"
+                        >
+                          <option value="DRIVING">Conduite</option>
+                          <option value="WALKING">Marche</option>
+                          <option value="BICYCLING">Vélo</option>
+                          <option value="TRANSIT">Transport en commun</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <label className="text-lg font-medium text-foreground">Éviter les autoroutes</label>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={settings.avoidHighways}
+                              onChange={(e) => setSettings(prev => ({ ...prev, avoidHighways: e.target.checked }))}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                          </label>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <label className="text-lg font-medium text-foreground">Éviter les péages</label>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={settings.avoidTolls}
+                              onChange={(e) => setSettings(prev => ({ ...prev, avoidTolls: e.target.checked }))}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Paramètres de carburant */}
+                  <div className="p-6 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                    <h4 className="text-xl font-semibold text-foreground mb-4">Estimation de carburant</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-lg font-medium text-foreground mb-3">
+                          Consommation moyenne (L/100km)
+                        </label>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          min="1"
+                          max="50"
+                          value={settings.fuelConsumptionRate}
+                          onChange={(e) => setSettings(prev => ({ ...prev, fuelConsumptionRate: parseFloat(e.target.value) || 8 }))}
+                          className="h-12 text-lg"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-lg font-medium text-foreground mb-3">
+                          Prix du carburant (FCFA/L)
+                        </label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={settings.fuelPrice}
+                          onChange={(e) => setSettings(prev => ({ ...prev, fuelPrice: parseInt(e.target.value) || 650 }))}
+                          className="h-12 text-lg"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* APIs disponibles */}
+                  <div className="p-6 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                    <h4 className="text-xl font-semibold text-foreground mb-4">APIs Google Maps disponibles</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border-l-4 border-blue-500">
+                        <h5 className="font-semibold text-foreground">Routes API</h5>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Calcul d'itinéraires optimisés avec waypoints et évitement de zones
+                        </p>
+                      </div>
+                      <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border-l-4 border-green-500">
+                        <h5 className="font-semibold text-foreground">Distance Matrix API</h5>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Calcul de distances et temps de trajet entre plusieurs points
+                        </p>
+                      </div>
+                      <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border-l-4 border-purple-500">
+                        <h5 className="font-semibold text-foreground">Snap to Roads API</h5>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Alignement précis des trajets GPS sur les routes existantes
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'backup' && (
+              <div>
+                <div className="flex items-center gap-4 mb-8">
+                  <Database className="w-10 h-10 text-green-600" />
+                  <div>
+                    <h3 className="text-3xl font-semibold text-foreground">Sauvegarde</h3>
+                    <p className="text-lg text-muted-foreground">Sauvegarde et restauration des données</p>
+                  </div>
+                </div>
+
+                <div className="space-y-8">
+                  <p className="text-lg text-foreground">
+                    Fonctionnalité en cours de développement...
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Save Button - Interface élargie */}
+            <div className="flex justify-end pt-8 mt-8 border-t border-border">
+              <Button onClick={handleSave} size="lg" className="px-12 py-4 text-lg">
+                <Save className="w-6 h-6 mr-3" />
+                Enregistrer les paramètres
               </Button>
             </div>
           </div>

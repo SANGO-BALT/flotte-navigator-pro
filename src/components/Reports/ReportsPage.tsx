@@ -123,7 +123,7 @@ const ReportsPage: React.FC = () => {
     }
   };
 
-  const handleDownloadReport = async (reportType: string, format: 'csv' | 'pdf') => {
+  const handleDownloadReport = async (reportType: string, format: 'csv' | 'pdf' | 'excel') => {
     try {
       let reportData;
       
@@ -132,6 +132,8 @@ const ReportsPage: React.FC = () => {
           reportData = ReportsService.generateFuelReport(dateRange.startDate, dateRange.endDate);
           if (format === 'csv') {
             ReportsService.exportToCSV(reportData.records, `rapport_carburant_${dateRange.startDate}_${dateRange.endDate}`);
+          } else if (format === 'excel') {
+            ReportsService.exportToExcel(reportData.records, `rapport_carburant_${dateRange.startDate}_${dateRange.endDate}`);
           } else {
             ReportsService.exportToPDF(reportData, 'carburant');
           }
@@ -140,6 +142,8 @@ const ReportsPage: React.FC = () => {
           reportData = ReportsService.generateMaintenanceReport(dateRange.startDate, dateRange.endDate);
           if (format === 'csv') {
             ReportsService.exportToCSV(reportData.records, `rapport_maintenance_${dateRange.startDate}_${dateRange.endDate}`);
+          } else if (format === 'excel') {
+            ReportsService.exportToExcel(reportData.records, `rapport_maintenance_${dateRange.startDate}_${dateRange.endDate}`);
           } else {
             ReportsService.exportToPDF(reportData, 'maintenance');
           }
@@ -148,6 +152,8 @@ const ReportsPage: React.FC = () => {
           reportData = ReportsService.generateVehicleReport(dateRange.startDate, dateRange.endDate);
           if (format === 'csv') {
             ReportsService.exportToCSV(reportData.vehicles, `rapport_vehicules_${dateRange.startDate}_${dateRange.endDate}`);
+          } else if (format === 'excel') {
+            ReportsService.exportToExcel(reportData.vehicles, `rapport_vehicules_${dateRange.startDate}_${dateRange.endDate}`);
           } else {
             ReportsService.exportToPDF(reportData, 'vehicules');
           }
@@ -172,95 +178,106 @@ const ReportsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      {/* Header avec contrôles */}
-      <div className="flex flex-col lg:flex-row gap-6 mb-8">
+    <div className="p-12 max-w-8xl mx-auto min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      {/* Header avec contrôles - Interface élargie */}
+      <div className="flex flex-col lg:flex-row gap-8 mb-12">
         <div className="flex-1">
-          <h2 className="text-3xl font-bold text-foreground mb-3">Rapports et Analyses</h2>
-          <p className="text-lg text-muted-foreground">Générez des rapports détaillés sur votre flotte</p>
+          <h2 className="text-5xl font-bold text-foreground mb-6">Rapports et Analyses</h2>
+          <p className="text-2xl text-muted-foreground">Générez des rapports détaillés sur votre flotte</p>
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-6">
+          <div className="flex gap-6">
             <div className="flex flex-col">
-              <label className="text-sm font-medium text-foreground mb-1">Date début</label>
+              <label className="text-lg font-medium text-foreground mb-3">Date début</label>
               <Input
                 type="date"
                 value={dateRange.startDate}
                 onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
-                className="w-auto"
+                className="w-auto h-14 text-lg"
               />
             </div>
             <div className="flex flex-col">
-              <label className="text-sm font-medium text-foreground mb-1">Date fin</label>
+              <label className="text-lg font-medium text-foreground mb-3">Date fin</label>
               <Input
                 type="date"
                 value={dateRange.endDate}
                 onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
-                className="w-auto"
+                className="w-auto h-14 text-lg"
               />
             </div>
           </div>
-          <Button onClick={handleExportAll} variant="outline" className="self-end">
-            <Download className="w-4 h-4 mr-2" />
+          <Button onClick={handleExportAll} variant="outline" className="self-end h-14 px-8 text-lg">
+            <Download className="w-6 h-6 mr-3" />
             Exporter tout
           </Button>
         </div>
       </div>
 
-      {/* Statistiques rapides */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* Statistiques rapides - Interface élargie */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
         {quickStats.map((stat, index) => (
-          <div key={index} className="fleet-card">
+          <div key={index} className="fleet-card p-8">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">{stat.title}</p>
-                <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                <p className={`text-sm mt-1 ${stat.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
+                <p className="text-lg text-muted-foreground mb-3">{stat.title}</p>
+                <p className="text-4xl font-bold text-foreground">{stat.value}</p>
+                <p className={`text-lg mt-3 ${stat.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
                   {stat.change} ce mois
                 </p>
               </div>
-              <stat.icon className={`w-8 h-8 ${stat.color}`} />
+              <stat.icon className={`w-16 h-16 ${stat.color}`} />
             </div>
           </div>
         ))}
       </div>
 
-      {/* Types de rapports */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+      {/* Types de rapports - Interface élargie */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 mb-12">
         {reportTypes.map((report) => (
-          <div key={report.id} className="fleet-card">
-            <div className="flex items-start space-x-4">
-              <div className={`p-3 rounded-lg ${report.color}`}>
-                <report.icon className="w-6 h-6" />
+          <div key={report.id} className="fleet-card p-8">
+            <div className="flex items-start space-x-6">
+              <div className={`p-6 rounded-lg ${report.color}`}>
+                <report.icon className="w-10 h-10" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-foreground mb-2">{report.title}</h3>
-                <p className="text-sm text-muted-foreground mb-4">{report.description}</p>
-                <div className="flex gap-2">
+                <h3 className="text-2xl font-semibold text-foreground mb-4">{report.title}</h3>
+                <p className="text-lg text-muted-foreground mb-6">{report.description}</p>
+                <div className="flex flex-col gap-4">
                   <Button 
                     onClick={() => handleGenerateReport(report.id)}
-                    size="sm" 
-                    className="fleet-button-primary"
+                    size="lg"
+                    className="fleet-button-primary h-14 text-lg"
                     disabled={isGenerating === report.id}
                   >
-                    <FileText className="w-4 h-4 mr-2" />
+                    <FileText className="w-6 h-6 mr-3" />
                     {isGenerating === report.id ? 'Génération...' : 'Générer'}
                   </Button>
-                  <div className="flex gap-1">
+                  <div className="flex gap-3">
                     <Button 
                       variant="outline" 
                       size="sm"
                       onClick={() => handleDownloadReport(report.id, 'csv')}
                       title="Télécharger CSV"
+                      className="flex-1 h-12 text-base"
                     >
                       CSV
                     </Button>
                     <Button 
                       variant="outline" 
                       size="sm"
+                      onClick={() => handleDownloadReport(report.id, 'excel')}
+                      title="Télécharger Excel"
+                      className="flex-1 h-12 text-base"
+                    >
+                      Excel
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
                       onClick={() => handleDownloadReport(report.id, 'pdf')}
                       title="Télécharger PDF"
+                      className="flex-1 h-12 text-base"
                     >
                       PDF
                     </Button>
@@ -272,16 +289,16 @@ const ReportsPage: React.FC = () => {
         ))}
       </div>
 
-      {/* Rapports récents */}
-      <div className="fleet-card">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-semibold text-foreground">Rapports récents</h3>
-          <Button variant="outline" size="sm">
+      {/* Rapports récents - Interface élargie */}
+      <div className="fleet-card p-8">
+        <div className="flex items-center justify-between mb-8">
+          <h3 className="text-3xl font-semibold text-foreground">Rapports récents</h3>
+          <Button variant="outline" size="lg" className="h-12 px-6 text-lg">
             Voir tout
           </Button>
         </div>
         
-        <div className="space-y-4">
+        <div className="space-y-6">
           {[
             {
               name: 'Rapport Carburant - Juin 2024',
@@ -302,22 +319,22 @@ const ReportsPage: React.FC = () => {
               size: '3.2 MB',
             },
           ].map((report, index) => (
-            <div key={index} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-              <div className="flex items-center space-x-3">
-                <FileText className="w-5 h-5 text-muted-foreground" />
+            <div key={index} className="flex items-center justify-between p-6 bg-muted/30 rounded-lg">
+              <div className="flex items-center space-x-6">
+                <FileText className="w-8 h-8 text-muted-foreground" />
                 <div>
-                  <p className="font-medium text-foreground">{report.name}</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xl font-medium text-foreground">{report.name}</p>
+                  <p className="text-lg text-muted-foreground mt-2">
                     {report.type} • {report.size} • {new Date(report.date).toLocaleDateString('fr-FR')}
                   </p>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm">
+              <div className="flex gap-4">
+                <Button variant="ghost" size="lg" className="h-12 px-6 text-lg">
                   Voir
                 </Button>
-                <Button variant="ghost" size="sm">
-                  <Download className="w-4 h-4" />
+                <Button variant="ghost" size="lg" className="h-12 px-4">
+                  <Download className="w-6 h-6" />
                 </Button>
               </div>
             </div>
