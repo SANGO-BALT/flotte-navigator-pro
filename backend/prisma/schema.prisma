@@ -1,0 +1,319 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Modèle Utilisateur avec authentification
+model User {
+  id            String   @id @default(cuid())
+  nom           String
+  prenom        String
+  email         String   @unique
+  password      String
+  telephone     String
+  poste         String
+  departement   String
+  role          Role     @default(UTILISATEUR)
+  statut        UserStatus @default(ACTIF)
+  dateEmbauche  DateTime
+  permis        String[]
+  adresse       String
+  dateNaissance DateTime
+  numeroEmploye String   @unique
+  salaire       Float?
+  photo         String?
+  
+  // Relations
+  violations     Violation[]
+  gpsRecords     GPSRecord[]
+  documents      Document[]
+  responsableVehicules Vehicle[] @relation("VehicleResponsable")
+  
+  // Audit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+enum Role {
+  ADMIN
+  GESTIONNAIRE
+  CONDUCTEUR
+  UTILISATEUR
+}
+
+enum UserStatus {
+  ACTIF
+  INACTIF
+  SUSPENDU
+}
+
+// Modèle Véhicule
+model Vehicle {
+  id              String        @id @default(cuid())
+  marque          String
+  modele          String
+  immatriculation String        @unique
+  annee           Int
+  type            VehicleType
+  statut          VehicleStatus @default(ACTIF)
+  kilometrage     Int
+  dateAchat       DateTime
+  prixAchat       Float
+  couleur         String
+  carburant       FuelType
+  numeroSerie     String        @unique
+  dateAssurance   DateTime
+  dateVisite      DateTime
+  responsableId   String?
+  notes           String?
+  
+  // Relations
+  responsable      User?              @relation("VehicleResponsable", fields: [responsableId], references: [id])
+  fuelRecords      FuelRecord[]
+  maintenanceRecords MaintenanceRecord[]
+  violations       Violation[]
+  gpsRecords       GPSRecord[]
+  documents        Document[]
+  
+  // Audit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("vehicles")
+}
+
+enum VehicleType {
+  VOITURE
+  MOTO
+  CAMION
+  BUS
+}
+
+enum VehicleStatus {
+  ACTIF
+  MAINTENANCE
+  HORS_SERVICE
+}
+
+enum FuelType {
+  ESSENCE
+  DIESEL
+  ELECTRIQUE
+  HYBRIDE
+}
+
+// Modèle Enregistrement Carburant
+model FuelRecord {
+  id           String    @id @default(cuid())
+  vehiculeId   String
+  vehiclePlate String
+  vehicleBrand String
+  date         DateTime
+  fuelType     FuelType
+  quantity     Float
+  unitPrice    Float
+  totalCost    Float
+  station      String
+  mileage      Int
+  conducteur   String?
+  facture      String?
+  notes        String?
+  
+  // Relations
+  vehicle Vehicle @relation(fields: [vehiculeId], references: [id], onDelete: Cascade)
+  
+  // Audit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("fuel_records")
+}
+
+// Modèle Maintenance
+model MaintenanceRecord {
+  id            String            @id @default(cuid())
+  vehiculeId    String
+  vehiclePlate  String
+  vehicleBrand  String
+  type          MaintenanceType
+  description   String
+  date          DateTime
+  datePrevu     DateTime?
+  statut        MaintenanceStatus @default(PROGRAMME)
+  cout          Float
+  garage        String
+  pieces        String[]
+  kilometrage   Int
+  technicien    String?
+  duree         String?
+  garantie      String?
+  facture       String?
+  notes         String?
+  
+  // Relations
+  vehicle Vehicle @relation(fields: [vehiculeId], references: [id], onDelete: Cascade)
+  
+  // Audit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("maintenance_records")
+}
+
+enum MaintenanceType {
+  PREVENTIVE
+  CORRECTIVE
+  URGENCE
+}
+
+enum MaintenanceStatus {
+  PROGRAMME
+  EN_COURS
+  TERMINE
+  REPORTE
+}
+
+// Modèle Violations
+model Violation {
+  id                   String         @id @default(cuid())
+  vehiculeId           String
+  vehiclePlate         String
+  conducteurId         String
+  conducteurNom        String
+  type                 ViolationType
+  description          String
+  date                 DateTime
+  lieu                 String
+  montant              Float
+  statut               ViolationStatus @default(EN_ATTENTE)
+  numeroContravention  String         @unique
+  numeroReference      String?
+  dateEcheance         DateTime?
+  datePaiement         DateTime?
+  points               Int?
+  tribunalCompetent    String?
+  notes                String?
+  
+  // Relations
+  vehicle    Vehicle @relation(fields: [vehiculeId], references: [id], onDelete: Cascade)
+  conducteur User    @relation(fields: [conducteurId], references: [id])
+  
+  // Audit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("violations")
+}
+
+enum ViolationType {
+  EXCES_VITESSE
+  STATIONNEMENT
+  FEU_ROUGE
+  TELEPHONE
+  CEINTURE
+  AUTRE
+}
+
+enum ViolationStatus {
+  EN_ATTENTE
+  PAYEE
+  CONTESTEE
+  ANNULEE
+}
+
+// Modèle GPS
+model GPSRecord {
+  id           String    @id @default(cuid())
+  vehiculeId   String
+  vehiclePlate String
+  latitude     Float
+  longitude    Float
+  vitesse      Float
+  direction    Float
+  timestamp    DateTime
+  adresse      String?
+  conducteurId String?
+  statut       GPSStatus @default(EN_MOUVEMENT)
+  kilometrage  Int?
+  carburant    Float?
+  temperature  Float?
+  
+  // Relations
+  vehicle    Vehicle @relation(fields: [vehiculeId], references: [id], onDelete: Cascade)
+  conducteur User?   @relation(fields: [conducteurId], references: [id])
+  
+  // Audit
+  createdAt DateTime @default(now())
+
+  @@map("gps_records")
+}
+
+enum GPSStatus {
+  EN_MOUVEMENT
+  ARRETE
+  PARKING
+}
+
+// Modèle Documents
+model Document {
+  id              String         @id @default(cuid())
+  nom             String
+  type            DocumentType
+  vehiculeId      String?
+  utilisateurId   String?
+  dateCreation    DateTime       @default(now())
+  dateExpiration  DateTime?
+  taille          Int
+  format          String
+  chemin          String
+  statut          DocumentStatus @default(VALIDE)
+  description     String?
+  tags            String[]
+  version         Int            @default(1)
+  
+  // Relations
+  vehicle     Vehicle? @relation(fields: [vehiculeId], references: [id], onDelete: Cascade)
+  utilisateur User?    @relation(fields: [utilisateurId], references: [id])
+  
+  // Audit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("documents")
+}
+
+enum DocumentType {
+  ASSURANCE
+  PERMIS
+  CARTE_GRISE
+  FACTURE
+  CONTRAT
+  AUTRE
+}
+
+enum DocumentStatus {
+  VALIDE
+  EXPIRE
+  EN_ATTENTE
+  REJETE
+}
+
+// Table pour les sessions/tokens (optionnel)
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("refresh_tokens")
+}
