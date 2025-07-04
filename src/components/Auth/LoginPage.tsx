@@ -1,8 +1,10 @@
 
 import React, { useState } from 'react';
-import { Shield, User, Key, Eye, EyeOff } from 'lucide-react';
+import { Shield, Mail, Key, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { apiService } from '@/services/apiService';
+import { toast } from 'sonner';
 
 interface LoginPageProps {
   onLogin: (userData: any) => void;
@@ -10,47 +12,34 @@ interface LoginPageProps {
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [credentials, setCredentials] = useState({
-    username: '',
+    email: '',
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Utilisateurs par défaut
-  const defaultUsers = [
-    {
-      id: '1',
-      username: 'admin',
-      password: 'admin123',
-      firstName: 'Super',
-      lastName: 'Administrateur',
-      role: 'super-admin',
-      email: 'admin@fleet.com',
-    },
-    {
-      id: '2',
-      username: 'manager',
-      password: 'manager123',
-      firstName: 'Jean',
-      lastName: 'Manager',
-      role: 'manager',
-      email: 'manager@fleet.com',
-    },
-  ];
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
-    const user = defaultUsers.find(
-      u => u.username === credentials.username && u.password === credentials.password
-    );
-
-    if (user) {
-      const { password, ...userWithoutPassword } = user;
-      onLogin(userWithoutPassword);
-    } else {
-      setError('Nom d\'utilisateur ou mot de passe incorrect');
+    try {
+      const response = await apiService.login(credentials);
+      
+      if (response.success && response.data) {
+        toast.success('Connexion réussie !');
+        onLogin(response.data.user);
+      } else {
+        setError(response.message || 'Erreur de connexion');
+        toast.error(response.message || 'Erreur de connexion');
+      }
+    } catch (error) {
+      const message = 'Erreur de connexion au serveur';
+      setError(message);
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -78,16 +67,16 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nom d'utilisateur
+                Email
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
-                  name="username"
-                  type="text"
-                  value={credentials.username}
+                  name="email"
+                  type="email"
+                  value={credentials.email}
                   onChange={handleChange}
-                  placeholder="admin"
+                  placeholder="admin@fleet.ga"
                   className="pl-10"
                   required
                 />
@@ -125,8 +114,19 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               </div>
             )}
 
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-              Se connecter
+            <Button 
+              type="submit" 
+              className="w-full bg-blue-600 hover:bg-blue-700"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Connexion...
+                </>
+              ) : (
+                'Se connecter'
+              )}
             </Button>
           </form>
 
@@ -135,10 +135,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             <h3 className="text-sm font-medium text-gray-700 mb-2">Comptes de test:</h3>
             <div className="space-y-2 text-xs text-gray-600">
               <div>
-                <strong>Admin:</strong> admin / admin123
+                <strong>Admin:</strong> admin@fleet.ga / admin123
               </div>
               <div>
-                <strong>Manager:</strong> manager / manager123
+                <strong>Manager:</strong> jean.obame@fleet.ga / password123
               </div>
             </div>
           </div>
