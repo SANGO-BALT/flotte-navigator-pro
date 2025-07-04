@@ -42,91 +42,91 @@
   color: #888;
 }
 
-/* Styles élargis pour écrans PC */
+/* Styles réduits pour écrans PC */
 @media (min-width: 1024px) {
   .fleet-card {
-    padding: 2rem !important;
-    margin: 1rem 0 !important;
+    padding: 1.5rem !important;
+    margin: 0.75rem 0 !important;
   }
   
   .fleet-button-primary {
-    min-height: 3rem !important;
-    padding: 1rem 2rem !important;
-    font-size: 1.125rem !important;
+    min-height: 2.5rem !important;
+    padding: 0.75rem 1.5rem !important;
+    font-size: 1rem !important;
   }
   
   .text-lg {
-    font-size: 1.25rem !important;
+    font-size: 1.125rem !important;
   }
   
   .text-xl {
-    font-size: 1.5rem !important;
+    font-size: 1.25rem !important;
   }
   
   .text-2xl {
-    font-size: 2rem !important;
+    font-size: 1.5rem !important;
   }
   
   .text-3xl {
-    font-size: 2.25rem !important;
+    font-size: 1.875rem !important;
   }
   
   .text-4xl {
-    font-size: 2.75rem !important;
+    font-size: 2.25rem !important;
   }
   
   .text-5xl {
-    font-size: 3.5rem !important;
+    font-size: 3rem !important;
   }
   
-  /* Espacements élargis */
+  /* Espacements réduits */
   .gap-8 {
-    gap: 3rem !important;
+    gap: 2rem !important;
   }
   
   .gap-12 {
-    gap: 4rem !important;
+    gap: 3rem !important;
   }
   
   .p-12 {
-    padding: 4rem !important;
-  }
-  
-  .p-10 {
     padding: 3rem !important;
   }
   
-  .p-8 {
+  .p-10 {
     padding: 2.5rem !important;
   }
   
-  .mb-12 {
-    margin-bottom: 4rem !important;
+  .p-8 {
+    padding: 2rem !important;
   }
   
-  .mb-8 {
+  .mb-12 {
     margin-bottom: 3rem !important;
   }
   
-  .mb-6 {
+  .mb-8 {
     margin-bottom: 2rem !important;
   }
   
-  /* Hauteurs élargies pour les inputs et boutons */
+  .mb-6 {
+    margin-bottom: 1.5rem !important;
+  }
+  
+  /* Hauteurs réduites pour les inputs et boutons */
   .h-12 {
-    height: 3.5rem !important;
+    height: 3rem !important;
   }
   
   .h-14 {
-    height: 4rem !important;
+    height: 3.5rem !important;
   }
   
-  /* Largeurs maximales élargies */
+  /* Largeurs maximales réduites */
   .max-w-8xl {
-    max-width: 120rem !important;
+    max-width: 90rem !important;
   }
   
-  /* Grille élargie */
+  /* Grille standard */
   .lg\\:col-span-2 {
     grid-column: span 2 / span 2 !important;
   }
@@ -135,9 +135,9 @@
     grid-column: span 3 / span 3 !important;
   }
   
-  /* Sidebar plus large */
+  /* Sidebar taille normale */
   .lg\\:w-80 {
-    width: 24rem !important;
+    width: 20rem !important;
   }
 }
 
@@ -174,45 +174,45 @@
 }
 
 .report-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-/* Styles pour les tableaux élargis */
+/* Styles pour les tableaux standard */
 .table-expanded {
-  font-size: 1.125rem;
+  font-size: 1rem;
 }
 
 .table-expanded th,
 .table-expanded td {
-  padding: 1rem 1.5rem;
+  padding: 0.75rem 1rem;
 }
 
-/* Styles pour les modales élargies */
+/* Styles pour les modales standard */
 .modal-expanded {
-  max-width: 80vw;
-  width: 80vw;
+  max-width: 70vw;
+  width: 70vw;
 }
 
 .modal-expanded .modal-content {
-  padding: 3rem;
+  padding: 2rem;
 }
 
 /* Responsive pour très grands écrans */
 @media (min-width: 1536px) {
   .max-w-8xl {
-    max-width: 140rem !important;
+    max-width: 100rem !important;
   }
   
   .text-6xl {
-    font-size: 4rem !important;
+    font-size: 3.75rem !important;
   }
   
   .p-16 {
-    padding: 5rem !important;
+    padding: 4rem !important;
   }
   
   .gap-16 {
-    gap: 5rem !important;
+    gap: 4rem !important;
   }
 }

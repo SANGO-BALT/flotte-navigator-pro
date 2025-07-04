@@ -91,8 +91,8 @@ const SettingsPage = () => {
     setApiSettings({ ...apiSettings, [e.target.name]: e.target.value });
   };
 
-  const handleListSettingsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setListSettings({ ...listSettings, [e.target.name]: e.target.value });
+  const handleListSettingsChange = (field: string, value: string | number) => {
+    setListSettings({ ...listSettings, [field]: value });
   };
 
   const saveSettings = () => {
@@ -100,15 +100,15 @@ const SettingsPage = () => {
   };
 
   return (
-    <div className="flex-1 space-y-8 p-8">
+    <div className="flex-1 space-y-6 p-6">
       <div>
-        <h3 className="text-3xl font-bold tracking-tight">Paramètres</h3>
-        <p className="text-muted-foreground text-lg">
+        <h3 className="text-2xl font-bold tracking-tight">Paramètres</h3>
+        <p className="text-muted-foreground">
           Gérez les paramètres de votre système de gestion de flotte
         </p>
       </div>
 
-      <Tabs defaultValue="general" className="space-y-6">
+      <Tabs defaultValue="general" className="space-y-4">
         <TabsList className="grid w-full grid-cols-6 lg:grid-cols-8">
           <TabsTrigger value="general">Général</TabsTrigger>
           <TabsTrigger value="appearance">Apparence</TabsTrigger>
@@ -120,13 +120,13 @@ const SettingsPage = () => {
           <TabsTrigger value="production">Production</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="general" className="space-y-6">
+        <TabsContent value="general" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Paramètres Généraux</CardTitle>
               <CardDescription>Configurez les paramètres généraux de votre application.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="app-name">Nom de l'application</Label>
                 <Input id="app-name" name="appName" value={generalSettings.appName} onChange={handleGeneralSettingsChange} />
@@ -161,13 +161,13 @@ const SettingsPage = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="appearance" className="space-y-6">
+        <TabsContent value="appearance" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Apparence</CardTitle>
               <CardDescription>Personnalisez l'apparence de votre application.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="theme">Thème</Label>
                 <Select onValueChange={(value) => setAppearanceSettings({ ...appearanceSettings, theme: value })}>
@@ -194,13 +194,13 @@ const SettingsPage = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="notifications" className="space-y-6">
+        <TabsContent value="notifications" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Notifications</CardTitle>
               <CardDescription>Gérez vos préférences de notification.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3">
               <div className="flex items-center justify-between rounded-md border p-4">
                 <div className="space-y-1">
                   <p className="text-sm font-medium leading-none">Notifications par e-mail</p>
@@ -227,13 +227,13 @@ const SettingsPage = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="security" className="space-y-6">
+        <TabsContent value="security" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Sécurité</CardTitle>
               <CardDescription>Configurez les paramètres de sécurité de votre compte.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3">
               <div className="flex items-center justify-between rounded-md border p-4">
                 <div className="space-y-1">
                   <p className="text-sm font-medium leading-none">Authentification à deux facteurs</p>
@@ -250,13 +250,13 @@ const SettingsPage = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="data" className="space-y-6">
+        <TabsContent value="data" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Gestion des données</CardTitle>
               <CardDescription>Configurez les paramètres de gestion des données.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="backup-frequency">Fréquence de sauvegarde</Label>
                 <Select onValueChange={(value) => setDataSettings({ ...dataSettings, backupFrequency: value })}>
@@ -279,13 +279,13 @@ const SettingsPage = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="apis" className="space-y-6">
+        <TabsContent value="apis" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Intégrations API</CardTitle>
               <CardDescription>Configurez les clés API et les intégrations externes.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="google-maps-api-key">Clé API Google Maps</Label>
                 <Input id="google-maps-api-key" name="googleMapsApiKey" value={apiSettings.googleMapsApiKey} onChange={handleApiSettingsChange} />
@@ -299,16 +299,16 @@ const SettingsPage = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="lists" className="space-y-6">
+        <TabsContent value="lists" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Paramètres de liste</CardTitle>
               <CardDescription>Configurez les paramètres par défaut pour les listes et les tableaux.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="default-page-size">Taille de page par défaut</Label>
-                <Select onValueChange={(value) => setListSettings({ ...listSettings, defaultPageSize: value })}>
+                <Select onValueChange={(value) => handleListSettingsChange('defaultPageSize', parseInt(value))}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
@@ -322,7 +322,7 @@ const SettingsPage = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="sort-order">Ordre de tri</Label>
-                <Select onValueChange={(value) => setListSettings({ ...listSettings, sortOrder: value })}>
+                <Select onValueChange={(value) => handleListSettingsChange('sortOrder', value)}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
@@ -337,7 +337,7 @@ const SettingsPage = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="production" className="space-y-6">
+        <TabsContent value="production" className="space-y-4">
           <ProductionTutorial />
         </TabsContent>
       </Tabs>
