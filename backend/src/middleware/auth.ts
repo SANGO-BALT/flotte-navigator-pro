@@ -33,7 +33,12 @@ export const authenticate = catchAsync(async (
   }
 
   // 2) Vérifier le token
-  const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    return next(new AppError('Configuration JWT manquante', 500));
+  }
+
+  const decoded = jwt.verify(token, secret) as {
     id: string;
     email: string;
     iat: number;
@@ -95,25 +100,28 @@ export const optionalAuth = catchAsync(async (
 
   if (token) {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
-        id: string;
-        email: string;
-      };
+      const secret = process.env.JWT_SECRET;
+      if (secret) {
+        const decoded = jwt.verify(token, secret) as {
+          id: string;
+          email: string;
+        };
 
-      const currentUser = await prisma.user.findUnique({
-        where: { id: decoded.id },
-        select: {
-          id: true,
-          email: true,
-          role: true,
-          nom: true,
-          prenom: true,
-          statut: true
+        const currentUser = await prisma.user.findUnique({
+          where: { id: decoded.id },
+          select: {
+            id: true,
+            email: true,
+            role: true,
+            nom: true,
+            prenom: true,
+            statut: true
+          }
+        });
+
+        if (currentUser && currentUser.statut === 'ACTIF') {
+          req.user = currentUser;
         }
-      });
-
-      if (currentUser && currentUser.statut === 'ACTIF') {
-        req.user = currentUser;
       }
     } catch (error) {
       // Token invalide, mais on continue sans utilisateur

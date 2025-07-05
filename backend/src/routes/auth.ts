@@ -46,11 +46,16 @@ const loginValidation = [
 ];
 
 // Fonction pour générer un token JWT
-const generateToken = (userId: string, email: string) => {
+const generateToken = (userId: string, email: string): string => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET must be defined');
+  }
+  
   return jwt.sign(
     { id: userId, email },
-    process.env.JWT_SECRET!,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
+    secret,
+    { expiresIn: '24h' }
   );
 };
 
@@ -124,7 +129,7 @@ export const register = catchAsync(async (req: express.Request, res: express.Res
       departement,
       role,
       dateEmbauche: new Date(dateEmbauche),
-      permis,
+      permis: typeof permis === 'string' ? permis : permis.join(','),
       adresse,
       dateNaissance: new Date(dateNaissance),
       numeroEmploye
@@ -275,8 +280,12 @@ export const changePassword = catchAsync(async (req: any, res: express.Response,
     where: { id: req.user.id }
   });
 
+  if (!user) {
+    return next(new AppError('Utilisateur non trouvé', 404));
+  }
+
   // Vérifier le mot de passe actuel
-  const isCurrentPasswordCorrect = await bcrypt.compare(currentPassword, user!.password);
+  const isCurrentPasswordCorrect = await bcrypt.compare(currentPassword, user.password);
 
   if (!isCurrentPasswordCorrect) {
     return next(new AppError('Mot de passe actuel incorrect', 400));
