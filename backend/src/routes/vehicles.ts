@@ -59,9 +59,9 @@ export const getVehicles = catchAsync(async (req: express.Request, res: express.
   
   if (req.query.search) {
     where.OR = [
-      { marque: { contains: req.query.search as string, mode: 'insensitive' } },
-      { modele: { contains: req.query.search as string, mode: 'insensitive' } },
-      { immatriculation: { contains: req.query.search as string, mode: 'insensitive' } }
+      { marque: { contains: req.query.search as string } },
+      { modele: { contains: req.query.search as string } },
+      { immatriculation: { contains: req.query.search as string } }
     ];
   }
 
@@ -77,13 +77,6 @@ export const getVehicles = catchAsync(async (req: express.Request, res: express.
             nom: true,
             prenom: true,
             email: true
-          }
-        },
-        _count: {
-          select: {
-            fuelRecords: true,
-            maintenanceRecords: true,
-            violations: true
           }
         }
       },
@@ -162,12 +155,6 @@ export const getVehicle = catchAsync(async (req: express.Request, res: express.R
 // @route   POST /api/vehicles
 // @access  Private (Admin/Gestionnaire)
 export const createVehicle = catchAsync(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  // Vérifier les erreurs de validation
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return next(new AppError(`Erreurs de validation: ${errors.array().map(e => e.msg).join(', ')}`, 400));
-  }
-
   const {
     marque,
     modele,

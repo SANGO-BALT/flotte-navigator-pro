@@ -76,7 +76,7 @@ export const register = catchAsync(async (req: express.Request, res: express.Res
   // Vérifier les erreurs de validation
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return next(new AppError(`Erreurs de validation: ${errors.array().map(e => e.msg).join(', ')}`, 400));
+    return next(new AppError(`Erreurs de validation: ${errors.array().map((e: any) => e.msg).join(', ')}`, 400));
   }
 
   const {
@@ -141,7 +141,7 @@ export const login = catchAsync(async (req: express.Request, res: express.Respon
   // Vérifier les erreurs de validation
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return next(new AppError(`Erreurs de validation: ${errors.array().map(e => e.msg).join(', ')}`, 400));
+    return next(new AppError(`Erreurs de validation: ${errors.array().map((e: any) => e.msg).join(', ')}`, 400));
   }
 
   const { email, password } = req.body;

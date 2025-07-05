@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -20,10 +20,10 @@ model User {
   telephone     String
   poste         String
   departement   String
-  role          Role     @default(UTILISATEUR)
-  statut        UserStatus @default(ACTIF)
+  role          String   @default("UTILISATEUR")
+  statut        String   @default("ACTIF")
   dateEmbauche  DateTime
-  permis        String[]
+  permis        String
   adresse       String
   dateNaissance DateTime
   numeroEmploye String   @unique
@@ -43,19 +43,6 @@ model User {
   @@map("users")
 }
 
-enum Role {
-  ADMIN
-  GESTIONNAIRE
-  CONDUCTEUR
-  UTILISATEUR
-}
-
-enum UserStatus {
-  ACTIF
-  INACTIF
-  SUSPENDU
-}
-
 // Modèle Véhicule
 model Vehicle {
   id              String        @id @default(cuid())
@@ -63,13 +50,13 @@ model Vehicle {
   modele          String
   immatriculation String        @unique
   annee           Int
-  type            VehicleType
-  statut          VehicleStatus @default(ACTIF)
+  type            String
+  statut          String        @default("ACTIF")
   kilometrage     Int
   dateAchat       DateTime
   prixAchat       Float
   couleur         String
-  carburant       FuelType
+  carburant       String
   numeroSerie     String        @unique
   dateAssurance   DateTime
   dateVisite      DateTime
@@ -91,26 +78,6 @@ model Vehicle {
   @@map("vehicles")
 }
 
-enum VehicleType {
-  VOITURE
-  MOTO
-  CAMION
-  BUS
-}
-
-enum VehicleStatus {
-  ACTIF
-  MAINTENANCE
-  HORS_SERVICE
-}
-
-enum FuelType {
-  ESSENCE
-  DIESEL
-  ELECTRIQUE
-  HYBRIDE
-}
-
 // Modèle Enregistrement Carburant
 model FuelRecord {
   id           String    @id @default(cuid())
@@ -118,7 +85,7 @@ model FuelRecord {
   vehiclePlate String
   vehicleBrand String
   date         DateTime
-  fuelType     FuelType
+  fuelType     String
   quantity     Float
   unitPrice    Float
   totalCost    Float
@@ -144,14 +111,14 @@ model MaintenanceRecord {
   vehiculeId    String
   vehiclePlate  String
   vehicleBrand  String
-  type          MaintenanceType
+  type          String
   description   String
   date          DateTime
   datePrevu     DateTime?
-  statut        MaintenanceStatus @default(PROGRAMME)
+  statut        String            @default("PROGRAMME")
   cout          Float
   garage        String
-  pieces        String[]
+  pieces        String
   kilometrage   Int
   technicien    String?
   duree         String?
@@ -169,19 +136,6 @@ model MaintenanceRecord {
   @@map("maintenance_records")
 }
 
-enum MaintenanceType {
-  PREVENTIVE
-  CORRECTIVE
-  URGENCE
-}
-
-enum MaintenanceStatus {
-  PROGRAMME
-  EN_COURS
-  TERMINE
-  REPORTE
-}
-
 // Modèle Violations
 model Violation {
   id                   String         @id @default(cuid())
@@ -189,12 +143,12 @@ model Violation {
   vehiclePlate         String
   conducteurId         String
   conducteurNom        String
-  type                 ViolationType
+  type                 String
   description          String
   date                 DateTime
   lieu                 String
   montant              Float
-  statut               ViolationStatus @default(EN_ATTENTE)
+  statut               String         @default("EN_ATTENTE")
   numeroContravention  String         @unique
   numeroReference      String?
   dateEcheance         DateTime?
@@ -214,22 +168,6 @@ model Violation {
   @@map("violations")
 }
 
-enum ViolationType {
-  EXCES_VITESSE
-  STATIONNEMENT
-  FEU_ROUGE
-  TELEPHONE
-  CEINTURE
-  AUTRE
-}
-
-enum ViolationStatus {
-  EN_ATTENTE
-  PAYEE
-  CONTESTEE
-  ANNULEE
-}
-
 // Modèle GPS
 model GPSRecord {
   id           String    @id @default(cuid())
@@ -242,7 +180,7 @@ model GPSRecord {
   timestamp    DateTime
   adresse      String?
   conducteurId String?
-  statut       GPSStatus @default(EN_MOUVEMENT)
+  statut       String    @default("EN_MOUVEMENT")
   kilometrage  Int?
   carburant    Float?
   temperature  Float?
@@ -257,17 +195,11 @@ model GPSRecord {
   @@map("gps_records")
 }
 
-enum GPSStatus {
-  EN_MOUVEMENT
-  ARRETE
-  PARKING
-}
-
 // Modèle Documents
 model Document {
   id              String         @id @default(cuid())
   nom             String
-  type            DocumentType
+  type            String
   vehiculeId      String?
   utilisateurId   String?
   dateCreation    DateTime       @default(now())
@@ -275,9 +207,9 @@ model Document {
   taille          Int
   format          String
   chemin          String
-  statut          DocumentStatus @default(VALIDE)
+  statut          String         @default("VALIDE")
   description     String?
-  tags            String[]
+  tags            String
   version         Int            @default(1)
   
   // Relations
@@ -289,22 +221,6 @@ model Document {
   updatedAt DateTime @updatedAt
 
   @@map("documents")
-}
-
-enum DocumentType {
-  ASSURANCE
-  PERMIS
-  CARTE_GRISE
-  FACTURE
-  CONTRAT
-  AUTRE
-}
-
-enum DocumentStatus {
-  VALIDE
-  EXPIRE
-  EN_ATTENTE
-  REJETE
 }
 
 // Table pour les sessions/tokens (optionnel)
