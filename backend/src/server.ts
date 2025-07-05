@@ -65,6 +65,30 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Static files for uploads
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
+// Root endpoint
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'API Fleet Management - Backend',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      api: '/api',
+      auth: '/api/auth',
+      vehicles: '/api/vehicles',
+      users: '/api/users',
+      fuel: '/api/fuel',
+      maintenance: '/api/maintenance',
+      violations: '/api/violations',
+      gps: '/api/gps',
+      documents: '/api/documents',
+      reports: '/api/reports'
+    },
+    frontend: 'http://localhost:5173',
+    documentation: 'Consultez le README.md pour plus d\'informations'
+  });
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({
@@ -96,6 +120,8 @@ app.listen(PORT, () => {
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);
   console.log(`🌍 Environnement: ${process.env.NODE_ENV || 'development'}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  console.log(`🔗 API Documentation: http://localhost:${PORT}/`);
+  console.log(`🎨 Frontend: http://localhost:5173 (à démarrer séparément)`);
 });
 
 export default app;
